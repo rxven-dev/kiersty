@@ -47,8 +47,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Stock Photos
     const defaultMemories = [
         { id: "1", src: "https://i.ibb.co/XxJ4SzrK/99f138e6-9963-4864-a84f-2a73b32de9c8.jpg", caption: "First Date ☕", album: "Dates" },
-        { id: "2", src: "https://i.ibb.co/kg12vH75/3cdd147e-ec86-467d-a603-9566ffdc1592.jpg", caption: "Cine Date 🎬", album: "Dates" },
-        { id: "3", src: "https://images.unsplash.com/photo-1494774157365-9e04c6720e47?q=80&w=600&auto=format&fit=crop", caption: "Just Us 💖", album: "Daily" }
+        { id: "2", src: "https://i.ibb.co/kg12vH75/3cdd147e-ec86-467d-a603-9566ffdc1592.jpg", caption: "Cine Date 🎬", album: "Dates" }
     ];
 
     // State
