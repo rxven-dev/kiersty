@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Our Memories 📸</title>
+    <link rel="stylesheet" href="css/memories.css">
+    <link rel="stylesheet" href="css/transition.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&family=Sacramento&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="floating-hearts">
+        <span>❤️</span><span>💖</span><span>🌸</span><span>✨</span><span>💕</span><span>💗</span>
+    </div>
+
+    <div class="wrapper">
+        <header class="glass-nav">
+            <div class="logo">Kiersty Hub</div>
+            <nav>
+                <a href="home.html">Home</a>
+                <a href="time.html">Our Time</a>
+                <a href="memories.html" class="active">Memories</a>
+                <a href="notes.html">Notes</a>
+            </nav>
+        </header>
+
+        <section class="memories-section">
+            <h2>Photos 📸</h2>
+            <p class="section-subtitle">cutiee pics collection.</p>
+
+            <div class="gallery-controls">
+                <div class="search-box">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" id="searchInput" placeholder="Search memories...">
+                </div>
+                <button id="openModalBtn" class="add-memory-btn"><i class="fa-solid fa-plus"></i> Add New Memory</button>
+            </div>
+
+            <div class="albums-bar" id="albumsBar">
+                </div>
+
+            <div class="gallery-grid" id="galleryGrid">
+                </div>
+        </section>
+
+        <footer>
+            <p></p>
+        </footer>
+    </div>
+
+    <div id="uploadModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" id="closeModalBtn">&times;</span>
+            <h3>Add a New Memory 💕</h3>
+            <form id="memoryForm">
+                <div class="form-group">
+                    <label for="imageFile">Choose Photo from Device:</label>
+                    <input type="file" id="imageFile" accept="image/*">
+                </div>
+                <div class="form-group">
+                    <label for="imageCaption">Caption:</label>
+                    <input type="text" id="imageCaption" placeholder="e.g., Coffee Date ☕" required>
+                </div>
+                <div class="form-group">
+                    <label for="albumSelect">Album:</label>
+                    <select id="albumSelect"></select>
+                </div>
+                <button type="submit" class="submit-btn">Save Memory ✨</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="viewModal" class="modal">
+        <div class="modal-content view-modal-content">
+            <span class="close-btn" id="closeViewBtn">&times;</span>
+            <div class="viewer-img-container">
+                <img id="viewImage" src="" alt="Memory View">
+            </div>
+            
+            <div id="viewModeDetails" class="viewer-details">
+                <h3 id="viewCaption">Caption</h3>
+                <span id="viewAlbumBadge" class="album-badge">Album</span>
+                <div class="viewer-actions">
+                    <button id="editMemoryBtn" class="action-btn edit-btn"><i class="fa-solid fa-pen-to-square"></i> Edit Photo</button>
+                    <button id="deleteMemoryBtn" class="action-btn delete-btn"><i class="fa-solid fa-trash"></i> Delete Photo</button>
+                </div>
+            </div>
+
+            <form id="editForm" class="edit-form" style="display: none;">
+                <div class="form-group">
+                    <label for="editCaptionInput">Change Caption:</label>
+                    <input type="text" id="editCaptionInput" required>
+                </div>
+                <div class="form-group">
+                    <label for="editFileInput">Change Photo (Optional):</label>
+                    <input type="file" id="editFileInput" accept="image/*">
+                </div>
+                <div class="form-group">
+                    <label for="editAlbumSelect">Album:</label>
+                    <select id="editAlbumSelect"></select>
+                </div>
+                <div class="edit-form-buttons">
+                    <button type="button" id="cancelEditBtn" class="cancel-btn">Cancel</button>
+                    <button type="submit" class="submit-btn">Save Changes ✨</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="createAlbumModal" class="modal">
+        <div class="modal-content prompt-dialog-content">
+            <div class="prompt-icon">📁</div>
+            <h3>Create New Album</h3>
+            <p>Enter a name for your new photo album:</p>
+            <input type="text" id="newAlbumNameInput" placeholder="e.g., Summer Trip 🌊">
+            <div class="dialog-buttons">
+                <button id="cancelAlbumBtn" class="dialog-btn secondary">Cancel</button>
+                <button id="confirmAlbumBtn" class="dialog-btn primary">Create Album ✨</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="editAlbumModal" class="modal">
+        <div class="modal-content prompt-dialog-content">
+            <div class="prompt-icon">✏️</div>
+            <h3>Manage Album</h3>
+            <p>Rename your album or remove it completely:</p>
+            <input type="text" id="editAlbumNameInput" placeholder="Album Name">
+            <div class="dialog-buttons vertical-layout">
+                <button id="saveAlbumRenameBtn" class="dialog-btn primary">Save New Name ✨</button>
+                <button id="deleteAlbumBtn" class="dialog-btn danger"><i class="fa-solid fa-trash"></i> Delete Album</button>
+                <button id="cancelEditAlbumBtn" class="dialog-btn secondary">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="deleteConfirmModal" class="modal">
+        <div class="modal-content prompt-dialog-content">
+            <div class="prompt-icon">💔</div>
+            <h3>Delete Memory?</h3>
+            <p>Are you sure you want to delete this memory? This action cannot be undone.</p>
+            <div class="dialog-buttons">
+                <button id="cancelDeleteBtn" class="dialog-btn secondary">Keep It</button>
+                <button id="confirmDeleteBtn" class="dialog-btn danger">Delete Photo</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/memories.js"></script>
+</body>
+</html>

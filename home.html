@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>For My Favorite Person 💖</title>
+    <link rel="stylesheet" href="css/home.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&family=Sacramento&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="floating-hearts">
+        <span>❤️</span><span>💖</span><span>🌸</span><span>✨</span><span>💕</span><span>💗</span>
+    </div>
+
+    <div class="wrapper">
+        <header class="glass-nav">
+            <div class="logo">Kiersty Hub</div>
+            <nav>
+                <a href="home.html" class="active">Home</a>
+                <a href="time.html">Our Time</a>
+                <a href="memories.html">Memories</a>
+                <a href="notes.html">Notes</a>
+            </nav>
+        </header>
+
+        <section class="hero-section">
+            <div class="hero-content">
+                <span class="badge">Hi my Babyy 🌸</span>
+                <h1>You Make My World So Much Brighter</h1>
+                <p>Every single moment with you feels like magic. Thank you for being the sweetest part of my life.</p>
+                <div class="hero-buttons">
+                    <a href="memories.html" class="btn primary-btn">Our Memories <i class="fa-solid fa-heart"></i></a>
+                    <a href="notes.html" class="btn secondary-btn">Open a Note 💌</a>
+                </div>
+            </div>
+
+            <div class="hero-image-card">
+                <div class="image-frame">
+                    <img src="https://i.ibb.co/ynQjym4v/6511ad40-a4b9-4f9e-b818-46ddd26741ae.jpg" alt="Cute Couple">
+                </div>
+                <div class="floating-badge">
+                    <i class="fa-solid fa-star"></i> My one and only Liza
+                </div>
+            </div>
+        </section>
+
+<section class="builder-section">
+            <div class="section-header">
+                <h2>Build Your Bouquet 💐</h2>
+                <p>Customize a special bouquet just for you!</p>
+            </div>
+
+            <div class="builder-container">
+                <div class="canvas-wrapper">
+                    <canvas id="bouquetCanvas" width="320" height="420" style="background: #77004733;"></canvas>
+                    <p id="bouquetStatus" class="status-msg"></p>
+                </div>
+
+                <div class="controls-card">
+                    <div class="control-group">
+                        <label>Pick Flowers</label>
+                        <div class="options-grid" id="flowerOptions">
+                            <button class="option-btn active" data-flower="roses">🌹 Roses</button>
+                            <button class="option-btn" data-flower="lilies">🪷 Lilies</button>
+                            <button class="option-btn" data-flower="tulips">🌷 Tulips</button>
+                            <button class="option-btn" data-flower="sunflowers">🌻 Sunflowers</button>
+                            <button class="option-btn" data-flower="daisies">🌼 Daisies</button>
+                            <button class="option-btn" data-flower="mixed">💐 Mixed Bloom</button>
+                        </div>
+                    </div>
+
+                    <div class="control-group">
+                        <label>Wrap Color</label>
+                        <div class="options-grid" id="wrapOptions">
+                            <button class="option-btn active" data-wrap="#ffc2d1">Pink</button>
+                            <button class="option-btn" data-wrap="#b8e0d2">Sage</button>
+                            <button class="option-btn" data-wrap="#d6e2e9">Soft Blue</button>
+                            <button class="option-btn" data-wrap="#f7d6e0">Cream</button>
+                        </div>
+                    </div>
+
+                    <div class="control-group">
+                        <label>Ribbon Color</label>
+                        <div class="options-grid" id="ribbonOptions">
+                            <button class="option-btn active" data-ribbon="#ff4d6d">Red</button>
+                            <button class="option-btn" data-ribbon="#ff758f">Rose</button>
+                            <button class="option-btn" data-ribbon="#ffb703">Gold</button>
+                            <button class="option-btn" data-ribbon="#70e000">Green</button>
+                        </div>
+                    </div>
+
+                    <button id="sendBouquetBtn" class="btn primary-btn full-width">Send Bouquet 💕</button>
+                </div>
+            </div>
+
+            <div class="collection-container">
+                <h3>Collection 💐</h3>
+                <p class="collection-sub">Your saved bouquets</p>
+                <div id="bouquetGallery" class="gallery-grid"></div>
+            </div>
+        </section>
+
+        <div id="floatingBouquet" class="floating-sticker hidden">
+            <span class="drag-handle">✨ Drag Me! ✨</span>
+            <img id="floatingImg" src="" alt="Floating Bouquet">
+            <button id="closeFloatingBtn" class="close-sticker">&times;</button>
+        </div>
+    </div>
+</div>
+
+<script src="js/bouquet.js"></script>
+</body>
+</html>

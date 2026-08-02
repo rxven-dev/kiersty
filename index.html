@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unlock My Heart 🔒</title>
+    <link rel="stylesheet" href="css/home.css">
+    <link rel="stylesheet" href="css/transition.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Sacramento&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            margin: 0;
+            overflow-x: hidden;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        .login-wrapper {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .mpin-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            box-shadow: 0 15px 35px rgba(255, 182, 193, 0.3);
+            border-radius: 30px;
+            padding: 40px 30px;
+            width: 100%;
+            max-width: 380px;
+            text-align: center;
+            position: relative;
+        }
+
+        .avatar-box {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #ff6584, #ff4071);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            color: white;
+            font-size: 2rem;
+            box-shadow: 0 8px 20px rgba(255, 101, 132, 0.35);
+        }
+
+        .mpin-card h2 {
+            font-size: 1.8rem;
+            color: #3b2e33;
+            margin-bottom: 6px;
+            font-weight: 600;
+        }
+
+        .mpin-card p {
+            font-size: 0.95rem;
+            color: #7d656e;
+            margin-bottom: 25px;
+        }
+
+        /* Dots display */
+        .pin-dots {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .dot {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            border: 2px solid #ff6584;
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .dot.filled {
+            background: #ff6584;
+            box-shadow: 0 0 10px rgba(255, 101, 132, 0.6);
+            transform: scale(1.15);
+        }
+
+        /* Keypad layout */
+        .keypad {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            max-width: 280px;
+            margin: 0 auto;
+        }
+
+        .key-btn {
+            height: 60px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            background: rgba(255, 255, 255, 0.5);
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: #3b2e33;
+            cursor: pointer;
+            outline: none;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .key-btn:hover {
+            background: rgba(255, 255, 255, 0.8);
+            transform: translateY(-2px);
+        }
+
+        .key-btn:active {
+            transform: scale(0.92);
+            background: rgba(255, 101, 132, 0.2);
+        }
+
+        .key-btn.action {
+            font-size: 1.1rem;
+            color: #ff4071;
+        }
+
+        /* Hint & Error feedback */
+        .hint-box {
+            margin-top: 20px;
+            min-height: 40px;
+            font-size: 0.88rem;
+            color: #d6335c;
+            font-weight: 500;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .hint-box.visible {
+            opacity: 1;
+        }
+
+        /* Error shake effect */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-10px); }
+            40%, 80% { transform: translateX(10px); }
+        }
+
+        .shake {
+            animation: shake 0.4s ease-in-out;
+        }
+    </style>
+</head>
+<body>
+    <div class="floating-hearts">
+        <span>❤️</span><span>💖</span><span>🌸</span><span>✨</span><span>💕</span><span>💗</span>
+    </div>
+
+    <div class="login-wrapper">
+        <div class="mpin-card" id="mpinCard">
+            <div class="avatar-box">
+                <i class="fa-solid fa-heart-lock"></i>
+            </div>
+            <h2>Enter Passcode</h2>
+            <p>Enter the 4-digit secret key 💌</p>
+
+            <div class="pin-dots">
+                <div class="dot"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
+            </div>
+
+            <div class="keypad">
+                <button class="key-btn" onclick="pressKey('1')">1</button>
+                <button class="key-btn" onclick="pressKey('2')">2</button>
+                <button class="key-btn" onclick="pressKey('3')">3</button>
+                <button class="key-btn" onclick="pressKey('4')">4</button>
+                <button class="key-btn" onclick="pressKey('5')">5</button>
+                <button class="key-btn" onclick="pressKey('6')">6</button>
+                <button class="key-btn" onclick="pressKey('7')">7</button>
+                <button class="key-btn" onclick="pressKey('8')">8</button>
+                <button class="key-btn" onclick="pressKey('9')">9</button>
+                <button class="key-btn action" onclick="clearPin()">C</button>
+                <button class="key-btn" onclick="pressKey('0')">0</button>
+                <button class="key-btn action" onclick="deleteKey()"><i class="fa-solid fa-backspace"></i></button>
+            </div>
+
+            <div class="hint-box" id="hintBox"></div>
+        </div>
+    </div>
+
+    <script>
+        const CORRECT_PIN = "0717";
+        let currentPin = "";
+
+        const dots = document.querySelectorAll('.dot');
+        const mpinCard = document.getElementById('mpinCard');
+        const hintBox = document.getElementById('hintBox');
+
+        function pressKey(num) {
+            if (currentPin.length < 4) {
+                currentPin += num;
+                updateDots();
+                if (currentPin.length === 4) {
+                    setTimeout(checkPin, 200);
+                }
+            }
+        }
+
+        function deleteKey() {
+            if (currentPin.length > 0) {
+                currentPin = currentPin.slice(0, -1);
+                updateDots();
+            }
+        }
+
+        function clearPin() {
+            currentPin = "";
+            updateDots();
+        }
+
+        function updateDots() {
+            dots.forEach((dot, index) => {
+                if (index < currentPin.length) {
+                    dot.classList.add('filled');
+                } else {
+                    dot.classList.remove('filled');
+                }
+            });
+        }
+
+        function checkPin() {
+            if (currentPin === CORRECT_PIN) {
+                hintBox.style.color = "#28a745";
+                hintBox.innerText = "Access Granted! Redirecting... 💖";
+                hintBox.classList.add('visible');
+                setTimeout(() => {
+                    window.location.href = "home.html";
+                }, 600);
+            } else {
+                mpinCard.classList.add('shake');
+                
+                hintBox.style.color = "#d6335c";
+                hintBox.innerText = "Incorrect PIN! 💡 Clue: The day we first started chatting (MMDD)";
+                hintBox.classList.add('visible');
+
+                setTimeout(() => {
+                    mpinCard.classList.remove('shake');
+                    clearPin();
+                }, 400);
+            }
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key >= '0' && e.key <= '9') pressKey(e.key);
+            else if (e.key === 'Backspace') deleteKey();
+            else if (e.key === 'Escape') clearPin();
+        });
+    </script>
+</body>
+</html>

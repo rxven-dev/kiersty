@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Our Time ⏳</title>
+    <link rel="stylesheet" href="css/time.css">
+<link rel="stylesheet" href="css/transition.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&family=Sacramento&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="floating-hearts">
+        <span>❤️</span><span>💖</span><span>🌸</span><span>✨</span><span>💕</span><span>💗</span>
+    </div>
+
+    <div class="wrapper">
+        <header class="glass-nav">
+            <div class="logo">Kiersty Hub</div>
+            <nav>
+                <a href="home.html">Home</a>
+                <a href="time.html" class="active">Our Time</a>
+                <a href="memories.html">Memories</a>
+                <a href="notes.html">Notes</a>
+            </nav>
+        </header>
+
+        <section class="counter-section glass-card">
+            <h2>Time We've Been Talking Together ✨</h2>
+            <div class="countdown-grid">
+                <div class="time-box">
+                    <span id="days">00</span>
+                    <p>Days</p>
+                </div>
+                <div class="time-box">
+                    <span id="hours">00</span>
+                    <p>Hours</p>
+                </div>
+                <div class="time-box">
+                    <span id="minutes">00</span>
+                    <p>Minutes</p>
+                </div>
+                <div class="time-box">
+                    <span id="seconds">00</span>
+                    <p>Seconds</p>
+                </div>
+            </div>
+        </section>
+
+        <footer>
+            <p>Every second with you is a gift. 💖</p>
+        </footer>
+    </div>
+
+    <script>
+        // CHANGE THIS TO YOUR ACTUAL ANNIVERSARY DATE (YYYY-MM-DDTHH:MM:SS)
+        const startDate = new Date("2026-07-17T00:00:00");
+
+        function updateCounter() {
+            const now = new Date();
+            const diff = now - startDate;
+
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+            const minutes = Math.floor((diff / 1000 / 60) % 60);
+            const seconds = Math.floor((diff / 1000) % 60);
+
+            document.getElementById("days").innerText = String(days).padStart(2, '0');
+            document.getElementById("hours").innerText = String(hours).padStart(2, '0');
+            document.getElementById("minutes").innerText = String(minutes).padStart(2, '0');
+            document.getElementById("seconds").innerText = String(seconds).padStart(2, '0');
+        }
+
+        setInterval(updateCounter, 1000);
+        updateCounter();
+    </script>
+</body>
+</html>

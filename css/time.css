@@ -1,0 +1,141 @@
+:root {
+    --primary-pink: #ff6584;
+    --deep-pink: #e04a6c;
+    --glass-bg: rgba(255, 255, 255, 0.65);
+    --card-shadow: 0 10px 30px rgba(255, 101, 132, 0.15);
+    --text-color: #4a3b40;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    font-family: 'Outfit', sans-serif;
+    background: linear-gradient(135deg, #fff0f3 0%, #ffd6e0 50%, #ffc2d1 100%);
+    color: var(--text-color);
+    min-height: 100vh;
+    overflow-x: hidden;
+    position: relative;
+}
+
+.floating-hearts {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    pointer-events: none; z-index: -1; overflow: hidden;
+}
+.floating-hearts span {
+    position: absolute; display: block; font-size: 1.5rem;
+    animation: floatUp 10s infinite linear; opacity: 0.4;
+}
+.floating-hearts span:nth-child(1) { left: 15%; animation-duration: 9s; }
+.floating-hearts span:nth-child(2) { left: 35%; animation-duration: 11s; }
+.floating-hearts span:nth-child(3) { left: 55%; animation-duration: 8s; }
+.floating-hearts span:nth-child(4) { left: 75%; animation-duration: 10s; }
+.floating-hearts span:nth-child(5) { left: 90%; animation-duration: 7s; }
+.floating-hearts span:nth-child(6) { left: 25%; animation-duration: 12s; }
+
+@keyframes floatUp {
+    0% { transform: translateY(100vh) scale(0.8) rotate(0deg); opacity: 0; }
+    50% { opacity: 0.6; }
+    100% { transform: translateY(-10vh) scale(1.2) rotate(360deg); opacity: 0; }
+}
+
+.wrapper { max-width: 1100px; margin: 0 auto; padding: 20px; }
+
+.glass-nav {
+    display: flex; justify-content: space-between; align-items: center;
+    background: var(--glass-bg); backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    padding: 15px 30px; border-radius: 50px; margin-bottom: 40px;
+    box-shadow: var(--card-shadow);
+}
+.logo { font-family: 'Sacramento', cursive; font-size: 2rem; color: var(--primary-pink); font-weight: bold; }
+nav a { text-decoration: none; color: var(--text-color); margin-left: 20px; font-weight: 500; transition: color 0.3s; }
+nav a:hover, nav a.active { color: var(--primary-pink); }
+
+.counter-section {
+    background: var(--glass-bg);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    border-radius: 30px;
+    padding: 60px 40px;
+    text-align: center;
+    margin: 40px 0;
+    box-shadow: var(--card-shadow);
+}
+.counter-section h2 { font-size: 2.2rem; margin-bottom: 40px; color: #3b2e33; }
+.countdown-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+.time-box { background: white; padding: 30px 20px; border-radius: 20px; box-shadow: 0 5px 15px rgba(255, 101, 132, 0.08); }
+.time-box span { font-size: 3rem; font-weight: bold; color: var(--primary-pink); display: block; }
+.time-box p { font-size: 1rem; color: #8c737c; margin-top: 10px; text-transform: uppercase; letter-spacing: 1px; }
+
+footer { text-align: center; padding: 40px 0 20px; color: #7d656e; font-weight: 500; }
+
+@media (max-width: 768px) {
+    .countdown-grid { grid-template-columns: repeat(2, 1fr); }
+    nav { display: none; }
+}
+
+/* ==========================================
+   Mobile Responsive Rules for Home Page
+   ========================================== */
+@media (max-width: 768px) {
+    .wrapper {
+        padding: 15px;
+    }
+
+    /* Navigation Bar */
+    .glass-nav {
+        flex-direction: column;
+        gap: 15px;
+        padding: 15px 20px;
+        border-radius: 25px;
+        margin-bottom: 25px;
+        text-align: center;
+    }
+
+    nav {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 12px;
+    }
+
+    nav a {
+        margin-left: 0;
+        font-size: 0.95rem;
+    }
+
+    /* Hero Section Layout */
+    .hero-section {
+        grid-template-columns: 1fr;
+        gap: 30px;
+        padding: 20px 0;
+        text-align: center;
+    }
+
+    .hero-content h1 {
+        font-size: 2.1rem;
+    }
+
+    .hero-content p {
+        font-size: 1rem;
+    }
+
+    .hero-buttons {
+        justify-content: center;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .btn {
+        width: 100%;
+        text-align: center;
+    }
+
+    /* Floating Music Player */
+    .music-player-card {
+        width: calc(100% - 30px);
+        left: 15px;
+        bottom: 15px;
+        padding: 12px 15px;
+    }
+}
