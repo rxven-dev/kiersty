@@ -1,4 +1,6 @@
 document.addEventListener("DOMContentLoaded", () => {
+    const API_BASE = "http://localhost:5000/api";
+
     // Modals
     const uploadModal = document.getElementById("uploadModal");
     const viewModal = document.getElementById("viewModal");
@@ -44,27 +46,40 @@ document.addEventListener("DOMContentLoaded", () => {
     const cancelDeleteBtn = document.getElementById("cancelDeleteBtn");
     const confirmDeleteBtn = document.getElementById("confirmDeleteBtn");
 
-    // Stock Photos
-    const defaultMemories = [
-        { id: "1", src: "https://i.ibb.co/XxJ4SzrK/99f138e6-9963-4864-a84f-2a73b32de9c8.jpg", caption: "First Date ☕", album: "Dates" },
-        { id: "2", src: "https://i.ibb.co/kg12vH75/3cdd147e-ec86-467d-a603-9566ffdc1592.jpg", caption: "Cine Date 🎬", album: "Dates" }
-    ];
-
     // State
-    let memories = JSON.parse(localStorage.getItem("customMemories")) || defaultMemories;
-    let customAlbums = JSON.parse(localStorage.getItem("customAlbums")) || ["Dates", "Trips", "Daily"];
+    let memories = [];
+    let customAlbums = ["Dates", "Trips", "Daily"];
     let selectedAlbum = "all";
     let activeMemoryId = null;
     let albumToEdit = null;
 
-    // Initialize
-    initAlbumsUI();
-    renderGallery();
+    // Initialize data from MongoDB
+    loadMemoriesFromDB();
+
+    async function loadMemoriesFromDB() {
+        try {
+            const res = await fetch(`${API_BASE}/memories`);
+            if (res.ok) {
+                memories = await res.json();
+                
+                // Extract unique albums from MongoDB records
+                const dbAlbums = memories.map(m => m.album).filter(Boolean);
+                dbAlbums.forEach(a => {
+                    if (!customAlbums.includes(a)) customAlbums.push(a);
+                });
+
+                initAlbumsUI();
+                renderGallery();
+            }
+        } catch (err) {
+            console.error("Failed to fetch memories from MongoDB:", err);
+        }
+    }
 
     // Modals display trigger
-    openModalBtn.onclick = () => uploadModal.style.display = "flex";
-    closeModalBtn.onclick = () => uploadModal.style.display = "none";
-    closeViewBtn.onclick = () => closeViewModal();
+    if (openModalBtn) openModalBtn.onclick = () => uploadModal.style.display = "flex";
+    if (closeModalBtn) closeModalBtn.onclick = () => uploadModal.style.display = "none";
+    if (closeViewBtn) closeViewBtn.onclick = () => closeViewModal();
 
     window.onclick = (e) => {
         if (e.target === uploadModal) uploadModal.style.display = "none";
@@ -74,7 +89,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (e.target === deleteConfirmModal) deleteConfirmModal.style.display = "none";
     };
 
-    // Form submission
+    // Form submission -> Save to MongoDB
     memoryForm.addEventListener("submit", (e) => {
         e.preventDefault();
         const fileInput = document.getElementById("imageFile");
@@ -83,16 +98,26 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (fileInput.files && fileInput.files[0]) {
             const reader = new FileReader();
-            reader.onload = function (event) {
-                const newMemory = {
-                    id: Date.now().toString(),
-                    src: event.target.result,
+            reader.onload = async function (event) {
+                const newMemoryPayload = {
+                    image: event.target.result,
                     caption: captionInput,
                     album: albumVal
                 };
-                memories.unshift(newMemory);
-                saveMemories();
-                renderGallery();
+
+                try {
+                    const response = await fetch(`${API_BASE}/memories`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(newMemoryPayload)
+                    });
+
+                    if (response.ok) {
+                        await loadMemoriesFromDB();
+                    }
+                } catch (err) {
+                    console.error("Error saving photo to database:", err);
+                }
             };
             reader.readAsDataURL(fileInput.files[0]);
         }
@@ -111,76 +136,23 @@ document.addEventListener("DOMContentLoaded", () => {
         const name = newAlbumNameInput.value.trim();
         if (name && !customAlbums.includes(name)) {
             customAlbums.push(name);
-            localStorage.setItem("customAlbums", JSON.stringify(customAlbums));
             initAlbumsUI();
         }
         createAlbumModal.style.display = "none";
         newAlbumNameInput.value = "";
     };
 
-    // Edit & Rename Album Handlers
-    cancelEditAlbumBtn.onclick = () => {
-        editAlbumModal.style.display = "none";
-        albumToEdit = null;
-    };
-
-    saveAlbumRenameBtn.onclick = () => {
-        const newName = editAlbumNameInput.value.trim();
-        if (newName && albumToEdit && newName !== albumToEdit) {
-            // Update album list
-            const index = customAlbums.indexOf(albumToEdit);
-            if (index !== -1) customAlbums[index] = newName;
-
-            // Update photos album tags
-            memories.forEach(mem => {
-                if (mem.album === albumToEdit) mem.album = newName;
-            });
-
-            if (selectedAlbum === albumToEdit) selectedAlbum = newName;
-
-            localStorage.setItem("customAlbums", JSON.stringify(customAlbums));
-            saveMemories();
-            initAlbumsUI();
-            renderGallery();
-        }
-        editAlbumModal.style.display = "none";
-        albumToEdit = null;
-    };
-
-    deleteAlbumBtn.onclick = () => {
-        if (!albumToEdit) return;
-
-        // Remove album from array
-        customAlbums = customAlbums.filter(a => a !== albumToEdit);
-
-        // Reassign photos in this album to "Daily"
-        memories.forEach(mem => {
-            if (mem.album === albumToEdit) mem.album = "Daily";
-        });
-
-        if (!customAlbums.includes("Daily")) customAlbums.push("Daily");
-
-        if (selectedAlbum === albumToEdit) selectedAlbum = "all";
-
-        localStorage.setItem("customAlbums", JSON.stringify(customAlbums));
-        saveMemories();
-        initAlbumsUI();
-        renderGallery();
-
-        editAlbumModal.style.display = "none";
-        albumToEdit = null;
-    };
-
     // Search filter listener
-    searchInput.addEventListener("input", renderGallery);
+    if (searchInput) searchInput.addEventListener("input", renderGallery);
 
     // Render Gallery Photos Grid
     function renderGallery() {
+        if (!galleryGrid) return;
         galleryGrid.innerHTML = "";
-        const query = searchInput.value.toLowerCase().trim();
+        const query = searchInput ? searchInput.value.toLowerCase().trim() : "";
 
         const filtered = memories.filter(mem => {
-            const matchesSearch = mem.caption.toLowerCase().includes(query);
+            const matchesSearch = mem.caption ? mem.caption.toLowerCase().includes(query) : true;
             const matchesAlbum = selectedAlbum === "all" || mem.album === selectedAlbum;
             return matchesSearch && matchesAlbum;
         });
@@ -194,24 +166,24 @@ document.addEventListener("DOMContentLoaded", () => {
             const item = document.createElement("div");
             item.className = "gallery-item";
             item.innerHTML = `
-                <img src="${mem.src}" alt="${mem.caption}">
+                <img src="${mem.image || mem.src}" alt="${mem.caption}">
                 <div class="gallery-overlay">
                     <span>${mem.caption}</span>
                     <small>📷 ${mem.album || 'Daily'}</small>
                 </div>
             `;
-            item.addEventListener("click", () => openViewModal(mem.id));
+            item.addEventListener("click", () => openViewModal(mem._id || mem.id));
             galleryGrid.appendChild(item);
         });
     }
 
     // Lightbox / View Modal logic
     function openViewModal(id) {
-        const mem = memories.find(m => m.id === id);
+        const mem = memories.find(m => (m._id || m.id) === id);
         if (!mem) return;
 
         activeMemoryId = id;
-        viewImage.src = mem.src;
+        viewImage.src = mem.image || mem.src;
         viewCaption.textContent = mem.caption;
         viewAlbumBadge.textContent = mem.album || "Daily";
 
@@ -225,88 +197,24 @@ document.addEventListener("DOMContentLoaded", () => {
         activeMemoryId = null;
     }
 
-    editMemoryBtn.addEventListener("click", () => {
-        const mem = memories.find(m => m.id === activeMemoryId);
-        if (!mem) return;
-
-        document.getElementById("editCaptionInput").value = mem.caption;
-        editAlbumSelect.value = mem.album || customAlbums[0];
-
-        viewModeDetails.style.display = "none";
-        editForm.style.display = "block";
-    });
-
-    cancelEditBtn.addEventListener("click", () => {
-        viewModeDetails.style.display = "block";
-        editForm.style.display = "none";
-    });
-
-    editForm.addEventListener("submit", (e) => {
-        e.preventDefault();
-        const memIndex = memories.findIndex(m => m.id === activeMemoryId);
-        if (memIndex === -1) return;
-
-        const newCaption = document.getElementById("editCaptionInput").value;
-        const newAlbum = editAlbumSelect.value;
-        const editFileInput = document.getElementById("editFileInput");
-
-        memories[memIndex].caption = newCaption;
-        memories[memIndex].album = newAlbum;
-
-        const finalizeEdit = () => {
-            saveMemories();
-            renderGallery();
-            closeViewModal();
-        };
-
-        if (editFileInput.files && editFileInput.files[0]) {
-            const reader = new FileReader();
-            reader.onload = function (event) {
-                memories[memIndex].src = event.target.result;
-                finalizeEdit();
-            };
-            reader.readAsDataURL(editFileInput.files[0]);
-        } else {
-            finalizeEdit();
-        }
-    });
-
-    // Delete Memory logic
-    deleteMemoryBtn.addEventListener("click", () => {
-        deleteConfirmModal.style.display = "flex";
-    });
-
-    cancelDeleteBtn.onclick = () => deleteConfirmModal.style.display = "none";
-
-    confirmDeleteBtn.onclick = () => {
-        memories = memories.filter(m => m.id !== activeMemoryId);
-        saveMemories();
-        renderGallery();
-        deleteConfirmModal.style.display = "none";
-        closeViewModal();
-    };
-
     // Render Albums UI Chips & Dropdowns
     function initAlbumsUI() {
-        albumSelect.innerHTML = customAlbums.map(a => `<option value="${a}">${a}</option>`).join("");
-        editAlbumSelect.innerHTML = customAlbums.map(a => `<option value="${a}">${a}</option>`).join("");
+        if (albumSelect) albumSelect.innerHTML = customAlbums.map(a => `<option value="${a}">${a}</option>`).join("");
+        if (editAlbumSelect) editAlbumSelect.innerHTML = customAlbums.map(a => `<option value="${a}">${a}</option>`).join("");
 
         const chipsHtml = `
             <button class="album-chip ${selectedAlbum === 'all' ? 'active' : ''}" data-album="all">All Photos</button>
             ${customAlbums.map(a => `
                 <button class="album-chip ${selectedAlbum === a ? 'active' : ''}" data-album="${a}">
                     <span>${a}</span>
-                    <i class="fa-solid fa-pen-to-square album-edit-btn" data-edit-album="${a}" title="Edit or Delete Album"></i>
                 </button>
             `).join("")}
             <button class="album-chip add-album-chip" id="addAlbumBtn"><i class="fa-solid fa-plus"></i> New Album</button>
         `;
-        albumsBar.innerHTML = chipsHtml;
+        if (albumsBar) albumsBar.innerHTML = chipsHtml;
 
-        // Add filter click handlers to chips
         document.querySelectorAll(".album-chip:not(.add-album-chip)").forEach(chip => {
-            chip.addEventListener("click", (e) => {
-                if (e.target.classList.contains("album-edit-btn")) return; // Don't filter when clicking edit icon
+            chip.addEventListener("click", () => {
                 document.querySelectorAll(".album-chip").forEach(c => c.classList.remove("active"));
                 chip.classList.add("active");
                 selectedAlbum = chip.getAttribute("data-album");
@@ -314,23 +222,12 @@ document.addEventListener("DOMContentLoaded", () => {
             });
         });
 
-        // Add Edit Album Icon handlers
-        document.querySelectorAll(".album-edit-btn").forEach(btn => {
-            btn.addEventListener("click", (e) => {
-                e.stopPropagation();
-                albumToEdit = btn.getAttribute("data-edit-album");
-                editAlbumNameInput.value = albumToEdit;
-                editAlbumModal.style.display = "flex";
+        const addBtn = document.getElementById("addAlbumBtn");
+        if (addBtn) {
+            addBtn.addEventListener("click", () => {
+                createAlbumModal.style.display = "flex";
+                newAlbumNameInput.focus();
             });
-        });
-
-        document.getElementById("addAlbumBtn").addEventListener("click", () => {
-            createAlbumModal.style.display = "flex";
-            newAlbumNameInput.focus();
-        });
-    }
-
-    function saveMemories() {
-        localStorage.setItem("customMemories", JSON.stringify(memories));
+        }
     }
 });

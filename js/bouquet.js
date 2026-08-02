@@ -1,4 +1,5 @@
 document.addEventListener("DOMContentLoaded", () => {
+    const API_BASE = "http://localhost:5000/api";
     const canvas = document.getElementById("bouquetCanvas");
     if (!canvas) return;
 
@@ -73,7 +74,7 @@ document.addEventListener("DOMContentLoaded", () => {
         ctx.fill();
         ctx.restore();
 
-        // 3. Stems & Greenery / Leaves
+        // 3. Stems & Greenery
         drawStemsAndLeaves(cx);
 
         // 4. Multi-Flower Bouquet Arrangement
@@ -360,74 +361,89 @@ document.addEventListener("DOMContentLoaded", () => {
         return "#" + (0x1000000 + (R < 255 ? R < 1 ? 0 : R : 255) * 0x10000 + (G < 255 ? G < 1 ? 0 : G : 255) * 0x100 + (B < 255 ? B < 1 ? 0 : B : 255)).toString(16).slice(1);
     }
 
-    // --- COLLECTION GALLERY & UNDO FEATURE ---
-    const getSavedBouquets = () => JSON.parse(localStorage.getItem("bouquetCollection") || "[]");
-
-    const renderGallery = () => {
+    // --- MONGODB COLLECTION & REMOVE FEATURE ---
+    const renderGallery = async () => {
         if (!galleryGrid) return;
-        const list = getSavedBouquets();
 
-        if (list.length === 0) {
-            galleryGrid.innerHTML = `<p style="color:#aaa; font-style:italic; grid-column:1/-1; text-align:center;">No bouquets saved yet! Build one above 💕</p>`;
-            return;
-        }
+        try {
+            const res = await fetch(`${API_BASE}/bouquets`);
+            const list = await res.json();
 
-        galleryGrid.innerHTML = list.map((item, index) => `
-            <div class="bouquet-card">
-                <img src="${item.imgData}" alt="Custom Bouquet">
-                <div class="card-details">
-                    <div class="flower-type">${item.flower === "mixed" ? "💐 Mixed Bloom" : item.flower}</div>
-                    <div class="date-label">${new Date(item.date).toLocaleDateString()}</div>
+            if (!list || list.length === 0) {
+                galleryGrid.innerHTML = `<p style="color:#aaa; font-style:italic; grid-column:1/-1; text-align:center;">No bouquets saved yet! Build one above 💕</p>`;
+                return;
+            }
+
+            galleryGrid.innerHTML = list.map((item) => `
+                <div class="bouquet-card">
+                    <img src="${item.imgData}" alt="Custom Bouquet">
+                    <div class="card-details">
+                        <div class="flower-type">${item.flower === "mixed" ? "💐 Mixed Bloom" : item.flower}</div>
+                        <div class="date-label">${new Date(item.date).toLocaleDateString()}</div>
+                    </div>
+                    <button class="undo-btn" data-id="${item._id}">↩️ Remove</button>
                 </div>
-                <button class="undo-btn" data-index="${index}">↩️ Undo / Remove</button>
-            </div>
-        `).join("");
+            `).join("");
 
-        // Attach undo events
-        galleryGrid.querySelectorAll(".undo-btn").forEach(btn => {
-            btn.addEventListener("click", (e) => {
-                const idx = parseInt(e.target.dataset.index);
-                removeBouquet(idx);
+            galleryGrid.querySelectorAll(".undo-btn").forEach(btn => {
+                btn.addEventListener("click", (e) => {
+                    const id = e.target.dataset.id;
+                    removeBouquet(id);
+                });
             });
-        });
+        } catch (err) {
+            console.error("Failed to load bouquets:", err);
+        }
     };
 
-    const removeBouquet = (index) => {
-        let list = getSavedBouquets();
-        list.splice(index, 1);
-        localStorage.setItem("bouquetCollection", JSON.stringify(list));
-        renderGallery();
-        if (statusMsg) {
-            statusMsg.innerText = "Removed from collection!";
-            statusMsg.style.color = "#888";
+    const removeBouquet = async (id) => {
+        try {
+            const res = await fetch(`${API_BASE}/bouquets/${id}`, { method: 'DELETE' });
+            if (res.ok) {
+                renderGallery();
+                if (statusMsg) {
+                    statusMsg.innerText = "Removed bouquet from MongoDB!";
+                    statusMsg.style.color = "#888";
+                }
+            }
+        } catch (err) {
+            console.error("Error deleting bouquet:", err);
         }
     };
 
     if (sendBtn) {
-        sendBtn.addEventListener("click", () => {
+        sendBtn.addEventListener("click", async () => {
             const dataUrl = canvas.toDataURL("image/png");
             const bouquetData = {
                 flower: selectedFlower,
                 wrap: selectedWrap,
                 ribbon: selectedRibbon,
-                imgData: dataUrl,
-                date: new Date().toISOString()
+                imgData: dataUrl
             };
 
-            let list = getSavedBouquets();
-            list.unshift(bouquetData); // Add to start
-            localStorage.setItem("bouquetCollection", JSON.stringify(list));
+            try {
+                const res = await fetch(`${API_BASE}/bouquets`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(bouquetData)
+                });
 
-            renderGallery();
+                if (res.ok) {
+                    renderGallery();
 
-            // Display floating draggable sticker
-            if (floatingSticker && floatingImg) {
-                floatingImg.src = dataUrl;
-                floatingSticker.classList.remove("hidden");
+                    if (floatingSticker && floatingImg) {
+                        floatingImg.src = dataUrl;
+                        floatingSticker.classList.remove("hidden");
+                    }
+
+                    if (statusMsg) {
+                        statusMsg.innerText = "✨ Bouquet saved to MongoDB! 💖";
+                        statusMsg.style.color = "#e04a6c";
+                    }
+                }
+            } catch (err) {
+                console.error("Error saving bouquet:", err);
             }
-
-            statusMsg.innerText = "✨ Bouquet saved to collection & floating on screen! 💖";
-            statusMsg.style.color = "#e04a6c";
         });
     }
 
@@ -439,12 +455,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // --- DRAGGABLE FLOATING STICKER LOGIC ---
     let isDragging = false;
-    let currentX;
-    let currentY;
-    let initialX;
-    let initialY;
-    let xOffset = 0;
-    let yOffset = 0;
+    let currentX, currentY, initialX, initialY;
+    let xOffset = 0, yOffset = 0;
 
     if (floatingSticker) {
         const dragStart = (e) => {
