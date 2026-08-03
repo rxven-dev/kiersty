@@ -1,9 +1,9 @@
-// Add or edit your custom letters and set their unlock dates (YYYY-MM-DD format)!
+// Custom letters configuration
 const letters = {
     'miss-you': {
-        title: "When You Miss Me 💖",
-        content: "Hey beautiful,\n\nWhenever you feel lonely or miss me, just close your eyes for a second. Remember that no matter where we are, you are always the first and last thing on my mind.\n\nI'm always sending you a big warm hug. I love you so much!",
-        unlockDate: "2026-08-31"
+        title: "My pretty babyy 💌",
+        content: "Hey Babyyy,\n\nHii ii miss you so much!\n\npakiss babyy. <3!",
+        unlockDate: "2026-08-03"
     },
     'stressed': {
         title: "When You Are Stressed 🌸",
@@ -18,16 +18,15 @@ const letters = {
 };
 
 let currentLetterId = null;
-const API_BASE = ""; // Relative URL if served from the same server, or set to e.g. "http://localhost:5000"
+const API_BASE = "http://localhost:5000"; 
 
 document.addEventListener("DOMContentLoaded", () => {
     updateCardLockStatus();
 });
 
-// Checks current date vs unlock date for all cards
 function updateCardLockStatus() {
     const today = new Date();
-    today.setHours(0, 0, 0, 0); // Compare date portion only
+    today.setHours(0, 0, 0, 0);
 
     Object.keys(letters).forEach(id => {
         const letter = letters[id];
@@ -56,7 +55,6 @@ async function openEnvelope(letterId) {
     const letter = letters[letterId];
     if (!letter) return;
 
-    // Date Verification
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const unlockDate = new Date(letter.unlockDate + "T00:00:00");
@@ -71,19 +69,16 @@ async function openEnvelope(letterId) {
     const modal = document.getElementById("envelopeModal");
     const wrapper = document.getElementById("envelopeWrapper");
 
-    // Set letter content
     document.getElementById("letterTitle").innerText = letter.title;
     document.getElementById("letterBody").innerText = letter.content;
     document.getElementById("replyStatus").innerText = "";
     document.getElementById("replyInput").value = "";
 
-    // Load reactions and comments from MongoDB
     await loadSavedReaction();
     await loadSavedComments();
 
     modal.style.display = "flex";
     
-    // Trigger animation
     setTimeout(() => {
         wrapper.querySelector(".envelope").classList.add("open");
     }, 100);
@@ -123,22 +118,49 @@ function closeEnvelope() {
     }, 400);
 }
 
-/* ==========================================
-   Reaction Logic (MongoDB Connected)
-   ========================================== */
+function showToast(message, type = "success") {
+    let container = document.getElementById("toastContainer");
+    if (!container) {
+        container = document.createElement("div");
+        container.id = "toastContainer";
+        container.className = "toast-container";
+        document.body.appendChild(container);
+    }
+
+    const toast = document.createElement("div");
+    toast.className = `toast-card ${type}`;
+    toast.innerHTML = `
+        <span class="toast-icon">${type === "success" ? "💖" : "⚠️"}</span>
+        <span class="toast-text">${message}</span>
+    `;
+
+    container.appendChild(toast);
+
+    setTimeout(() => toast.classList.add("show"), 50);
+
+    setTimeout(() => {
+        toast.classList.remove("show");
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+
+/* --- Reaction Logic --- */
 async function reactToLetter(selectedEmoji) {
+    // Check if letter ID exists before sending request
+    if (!currentLetterId) {
+        showToast("Please open a letter first!", "error");
+        return;
+    }
+
     const feedback = document.getElementById("reactionFeedback");
+    const activeBtn = document.querySelector(".react-btn.active");
     
+    let newEmoji = selectedEmoji;
+    if (activeBtn && activeBtn.innerText.trim() === selectedEmoji) {
+        newEmoji = ""; // Toggle off reaction
+    }
+
     try {
-        const res = await fetch(`${API_BASE}/api/reactions/${currentLetterId}`);
-        const currentData = res.ok ? await res.json() : null;
-        let newEmoji = selectedEmoji;
-
-        // Toggle reaction off if clicking the same one again
-        if (currentData && currentData.emoji === selectedEmoji) {
-            newEmoji = "";
-        }
-
         const saveRes = await fetch(`${API_BASE}/api/reactions`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -147,16 +169,19 @@ async function reactToLetter(selectedEmoji) {
 
         if (saveRes.ok) {
             if (!newEmoji) {
-                feedback.innerText = "Reaction removed";
+                if (feedback) feedback.innerText = "Reaction removed";
             } else if (newEmoji === '👎') {
-                feedback.innerText = "You disliked this? 🥺 Sending hugs anyway!";
+                if (feedback) feedback.innerText = "You disliked this? 🥺 Sending hugs anyway!";
             } else {
-                feedback.innerText = `You reacted ${newEmoji}`;
+                if (feedback) feedback.innerText = `You reacted ${newEmoji}`;
             }
             await loadSavedReaction();
+        } else {
+            showToast("Failed to save reaction", "error");
         }
     } catch (err) {
         console.error("Error saving reaction:", err);
+        showToast("Could not save reaction", "error");
     }
 }
 
@@ -174,32 +199,26 @@ async function loadSavedReaction() {
         const currentReaction = data ? data.emoji : "";
 
         buttons.forEach(btn => {
-            if (currentReaction && btn.innerText.includes(currentReaction)) {
+            if (currentReaction && btn.innerText.trim() === currentReaction.trim()) {
                 btn.classList.add("active");
             }
         });
 
-        if (currentReaction) {
-            feedback.innerText = `Current reaction: ${currentReaction}`;
-        } else {
-            feedback.innerText = "";
+        if (feedback) {
+            feedback.innerText = currentReaction ? `Current reaction: ${currentReaction}` : "";
         }
     } catch (err) {
         console.error("Error loading reaction:", err);
     }
 }
 
-/* ==========================================
-   Comment Logic: Save, Load, Edit, & Delete (MongoDB Connected)
-   ========================================== */
+/* --- Comment Logic --- */
 async function sendReply() {
     const replyInput = document.getElementById("replyInput");
     const replyText = replyInput.value.trim();
-    const status = document.getElementById("replyStatus");
 
     if (!replyText) {
-        status.style.color = "#e04a6c";
-        status.innerText = "Please type a short message first!";
+        showToast("Please type a message first!", "error");
         return;
     }
 
@@ -217,18 +236,15 @@ async function sendReply() {
         });
 
         if (res.ok) {
-            status.style.color = "#48bb78";
-            status.innerText = "Comment added! 💕";
+            showToast("Comment added! 💕", "success");
             replyInput.value = "";
             await loadSavedComments();
         } else {
-            status.style.color = "#e04a6c";
-            status.innerText = "Failed to save comment.";
+            showToast("Failed to save comment.", "error");
         }
     } catch (err) {
         console.error("Error sending comment:", err);
-        status.style.color = "#e04a6c";
-        status.innerText = "Error connecting to server.";
+        showToast("Error connecting to server.", "error");
     }
 }
 
@@ -241,14 +257,16 @@ async function loadSavedComments() {
         commentsContainer.className = "comments-list-container";
         
         const replyBox = document.querySelector(".reply-container");
-        replyBox.parentNode.insertBefore(commentsContainer, replyBox);
+        if (replyBox && replyBox.parentNode) {
+            replyBox.parentNode.insertBefore(commentsContainer, replyBox);
+        }
     }
 
     try {
         const res = await fetch(`${API_BASE}/api/comments/${currentLetterId}`);
         const commentsList = res.ok ? await res.json() : [];
 
-        if (commentsList.length === 0) {
+        if (!commentsList || commentsList.length === 0) {
             commentsContainer.innerHTML = "";
             return;
         }
@@ -256,18 +274,20 @@ async function loadSavedComments() {
         commentsContainer.innerHTML = `
             <h4 class="comments-title">Her Comments 💬</h4>
             <div class="comments-feed">
-                ${commentsList.map(c => `
-                    <div class="comment-bubble" id="comment-${c._id}">
-                        <div class="comment-content">
-                            <p class="comment-text" id="text-${c._id}">${escapeHtml(c.text)}</p>
-                            <span class="comment-time">${c.time}</span>
+                ${commentsList.map(c => {
+                    const id = c._id; // Standard MongoDB string ID
+                    return `
+                    <div class="comment-bubble" id="comment-${id}">
+                        <div class="comment-content" id="content-${id}">
+                            <p class="comment-text" id="text-${id}">${escapeHtml(c.text)}</p>
+                            <span class="comment-time">${escapeHtml(c.time || '')}</span>
                         </div>
                         <div class="comment-actions">
-                            <button onclick="enableEditComment('${c._id}')" title="Edit"><i class="fa-solid fa-pen"></i></button>
-                            <button onclick="deleteComment('${c._id}')" title="Delete"><i class="fa-solid fa-trash"></i></button>
+                            <button onclick="enableEditComment('${id}')" title="Edit"><i class="fa-solid fa-pen"></i></button>
+                            <button onclick="deleteComment('${id}')" title="Delete"><i class="fa-solid fa-trash"></i></button>
                         </div>
                     </div>
-                `).join('')}
+                `}).join('')}
             </div>
         `;
     } catch (err) {
@@ -275,12 +295,16 @@ async function loadSavedComments() {
     }
 }
 
-// Edit Comment Inline
 function enableEditComment(id) {
     const textElement = document.getElementById(`text-${id}`);
+    if (!textElement) return;
+    
     const currentText = textElement.innerText;
+    const contentContainer = document.getElementById(`content-${id}`);
 
-    textElement.parentElement.innerHTML = `
+    if (!contentContainer) return;
+
+    contentContainer.innerHTML = `
         <div class="edit-comment-box">
             <input type="text" id="input-${id}" value="${escapeHtml(currentText)}" />
             <button onclick="saveEditComment('${id}')" class="save-btn">Save</button>
@@ -290,29 +314,48 @@ function enableEditComment(id) {
 }
 
 async function saveEditComment(id) {
-    const newText = document.getElementById(`input-${id}`).value.trim();
-    if (!newText) return;
+    // 1. Guard against bad/undefined IDs
+    if (!id || id === 'undefined' || id === '[object Object]') {
+        showToast("Invalid comment ID!", "error");
+        return;
+    }
+
+    const inputField = document.getElementById(`input-${id}`);
+    if (!inputField) return;
+
+    const newText = inputField.value.trim();
+    if (!newText) {
+        showToast("Comment text cannot be empty!", "error");
+        return;
+    }
 
     try {
-        const res = await fetch(`${API_BASE}/api/comments/${id}`, {
+        // Ensure clean string formatting in URL
+        const cleanId = String(id).trim();
+        const res = await fetch(`${API_BASE}/api/comments/${cleanId}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ text: newText })
         });
 
         if (res.ok) {
+            showToast("Comment updated! ✨", "success");
             await loadSavedComments();
         } else {
-            alert("Failed to update comment.");
+            const err = await res.json().catch(() => ({}));
+            showToast(err.error || "Failed to update comment.", "error");
         }
     } catch (err) {
         console.error("Error editing comment:", err);
+        showToast("Server error during update.", "error");
     }
 }
 
-// Delete Comment
 async function deleteComment(id) {
-    if (!confirm("Are you sure you want to delete this comment?")) return;
+    if (!id || id === 'undefined') {
+        showToast("Invalid Comment ID.", "error");
+        return;
+    }
 
     try {
         const res = await fetch(`${API_BASE}/api/comments/${id}`, {
@@ -320,15 +363,22 @@ async function deleteComment(id) {
         });
 
         if (res.ok) {
+            showToast("Comment deleted 💕", "success");
+            await loadSavedComments();
+        } else if (res.status === 404) {
+            // Comment was already deleted or doesn't exist in MongoDB
+            showToast("Comment no longer exists on server. Refreshing...", "error");
             await loadSavedComments();
         } else {
-            alert("Failed to delete comment.");
+            const errData = await res.json().catch(() => ({}));
+            showToast(errData.error || "Failed to delete comment.", "error");
         }
     } catch (err) {
         console.error("Error deleting comment:", err);
+        showToast("Server error during delete.", "error");
     }
 }
 
 function escapeHtml(str) {
-    return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+    return str ? String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;") : "";
 }

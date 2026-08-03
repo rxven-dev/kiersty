@@ -32,7 +32,7 @@
             <div class="letters-grid">
                 <div class="letter-card" onclick="openEnvelope('miss-you')">
                     <div class="card-icon"><i class="fa-solid fa-envelope-open-text"></i></div>
-                    <h3>You miss me</h3>
+                    <h3>Testing</h3>
                     <p class="card-status"><i class="fa-solid fa-envelope-open"></i> Click to open</p>
                 </div>
                 <div class="letter-card" onclick="openEnvelope('stressed')">
@@ -59,27 +59,29 @@
             <div class="envelope">
                 <div class="flap top-flap"></div>
                 <div class="pocket"></div>
-                <div class="letter-paper" id="letterPaper">
-                    <button class="close-card-btn" onclick="closeEnvelope()">&times;</button>
-                    <h3 id="letterTitle">Letter Title</h3>
-                    <div class="letter-body" id="letterBody">Letter content goes here...</div>
-                    
-                    <div class="reaction-container">
-                        <span>How did this make you feel?</span>
-                        <div class="reactions">
-                            <button class="react-btn" onclick="reactToLetter('❤️')">❤️</button>
-                            <button class="react-btn" onclick="reactToLetter('👍')">👍</button>
-                            <button class="react-btn" onclick="reactToLetter('👎')">👎</button>
-                        </div>
-                        <p id="reactionFeedback" class="reaction-feedback"></p>
-                    </div>
+<div class="letter-paper" id="letterPaper">
+    <button class="close-card-btn" onclick="closeEnvelope()">&times;</button>
+    <h3 id="letterTitle">Letter Title</h3>
+    <div class="letter-body" id="letterBody">Letter content goes here...</div>
+    
+    <div id="commentsListContainer" class="comments-list-container"></div>
 
-                    <div class="reply-container">
-                        <textarea id="replyInput" placeholder="Write a reply back to him... ✍️"></textarea>
-                        <button class="send-reply-btn" onclick="sendReply()">Send Reply 💕</button>
-                        <p id="replyStatus" class="reply-status"></p>
-                    </div>
-                </div>
+    <div class="reaction-container">
+        <span>How did this make you feel?</span>
+        <div class="reactions">
+            <button class="react-btn" onclick="reactToLetter('❤️')">❤️</button>
+            <button class="react-btn" onclick="reactToLetter('👍')">👍</button>
+            <button class="react-btn" onclick="reactToLetter('👎')">👎</button>
+        </div>
+        <p id="reactionFeedback" class="reaction-feedback"></p>
+    </div>
+
+    <div class="reply-container">
+        <textarea id="replyInput" placeholder="Write a reply back to him... ✍️"></textarea>
+        <button class="send-reply-btn" onclick="sendReply()">Send Reply 💕</button>
+        <p id="replyStatus" class="reply-status"></p>
+    </div>
+</div>
             </div>
         </div>
     </div>

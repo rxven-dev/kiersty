@@ -74,7 +74,15 @@ app.get('/api/comments/:letterId', async (req, res) => {
 
 app.post('/api/comments', async (req, res) => {
   try {
-    const newComment = new Comment(req.body);
+    const { letterId, text, time } = req.body;
+    if (!letterId || !text) {
+      return res.status(400).json({ error: "letterId and text are required" });
+    }
+    const newComment = new Comment({
+      letterId,
+      text,
+      time: time || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    });
     const saved = await newComment.save();
     res.status(201).json(saved);
   } catch (err) {
@@ -84,7 +92,17 @@ app.post('/api/comments', async (req, res) => {
 
 app.put('/api/comments/:id', async (req, res) => {
   try {
-    const updated = await Comment.findByIdAndUpdate(req.params.id, { text: req.body.text }, { new: true });
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ error: "Invalid comment ID format" });
+    }
+    const updated = await Comment.findByIdAndUpdate(
+      req.params.id, 
+      { text: req.body.text }, 
+      { new: true }
+    );
+    if (!updated) {
+      return res.status(404).json({ error: "Comment not found in database" });
+    }
     res.json(updated);
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -93,8 +111,14 @@ app.put('/api/comments/:id', async (req, res) => {
 
 app.delete('/api/comments/:id', async (req, res) => {
   try {
-    await Comment.findByIdAndDelete(req.params.id);
-    res.json({ message: "Comment deleted successfully" });
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ error: "Invalid comment ID format" });
+    }
+    const deleted = await Comment.findByIdAndDelete(req.params.id);
+    if (!deleted) {
+      return res.status(404).json({ error: "Comment not found in database" });
+    }
+    res.json({ message: "Comment deleted successfully from MongoDB" });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
