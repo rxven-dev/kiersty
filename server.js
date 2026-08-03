@@ -28,7 +28,14 @@ const CommentSchema = new mongoose.Schema({
 });
 const Comment = mongoose.model('Comment', CommentSchema);
 
-// 2. Memory Schema
+// 2. Reaction Schema
+const ReactionSchema = new mongoose.Schema({
+  letterId: { type: String, required: true, unique: true },
+  emoji: { type: String, default: "" }
+});
+const Reaction = mongoose.model('Reaction', ReactionSchema);
+
+// 3. Memory Schema
 const MemorySchema = new mongoose.Schema({
   caption: { type: String, default: "" },
   album: { type: String, default: "Daily" },
@@ -37,13 +44,13 @@ const MemorySchema = new mongoose.Schema({
 });
 const Memory = mongoose.model('Memory', MemorySchema);
 
-// 3. Album Schema
+// 4. Album Schema
 const AlbumSchema = new mongoose.Schema({
   name: { type: String, required: true, unique: true }
 });
 const Album = mongoose.model('Album', AlbumSchema);
 
-// 4. Bouquet Schema
+// 5. Bouquet Schema
 const BouquetSchema = new mongoose.Schema({
   flower: String,
   wrap: String,
@@ -70,6 +77,48 @@ app.post('/api/comments', async (req, res) => {
     const newComment = new Comment(req.body);
     const saved = await newComment.save();
     res.status(201).json(saved);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.put('/api/comments/:id', async (req, res) => {
+  try {
+    const updated = await Comment.findByIdAndUpdate(req.params.id, { text: req.body.text }, { new: true });
+    res.json(updated);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.delete('/api/comments/:id', async (req, res) => {
+  try {
+    await Comment.findByIdAndDelete(req.params.id);
+    res.json({ message: "Comment deleted successfully" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// --- REACTIONS ROUTES ---
+app.get('/api/reactions/:letterId', async (req, res) => {
+  try {
+    const reaction = await Reaction.findOne({ letterId: req.params.letterId });
+    res.json(reaction || { letterId: req.params.letterId, emoji: "" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/reactions', async (req, res) => {
+  try {
+    const { letterId, emoji } = req.body;
+    const reaction = await Reaction.findOneAndUpdate(
+      { letterId },
+      { emoji },
+      { upsert: true, new: true }
+    );
+    res.json(reaction);
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
