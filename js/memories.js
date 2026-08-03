@@ -13,6 +13,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const editForm = document.getElementById("editForm");
     const albumSelect = document.getElementById("albumSelect");
     const editAlbumSelect = document.getElementById("editAlbumSelect");
+    const editCaptionInput = document.getElementById("editCaptionInput");
+    const editFileInput = document.getElementById("editFileInput");
     const galleryGrid = document.getElementById("galleryGrid");
     const searchInput = document.getElementById("searchInput");
     const albumsBar = document.getElementById("albumsBar");
@@ -46,14 +48,22 @@ document.addEventListener("DOMContentLoaded", () => {
     const cancelDeleteBtn = document.getElementById("cancelDeleteBtn");
     const confirmDeleteBtn = document.getElementById("confirmDeleteBtn");
 
-    // State
+    // State initialization with solid fallbacks
     let memories = [];
-    let customAlbums = ["Dates", "Trips", "Daily"];
+    let defaultAlbums = ["Dates", "Trips", "Daily"];
+    let customAlbums = JSON.parse(localStorage.getItem("kiersty_custom_albums"));
+
+    if (!customAlbums || !Array.isArray(customAlbums) || customAlbums.length === 0) {
+        customAlbums = defaultAlbums;
+        localStorage.setItem("kiersty_custom_albums", JSON.stringify(customAlbums));
+    }
+
     let selectedAlbum = "all";
     let activeMemoryId = null;
     let albumToEdit = null;
 
-    // Initialize data from MongoDB
+    // --- Immediate UI Render ---
+    initAlbumsUI();
     loadMemoriesFromDB();
 
     async function loadMemoriesFromDB() {
@@ -62,21 +72,34 @@ document.addEventListener("DOMContentLoaded", () => {
             if (res.ok) {
                 memories = await res.json();
                 
-                // Extract unique albums from MongoDB records
+                // Merge MongoDB albums with local custom albums
                 const dbAlbums = memories.map(m => m.album).filter(Boolean);
+                let updated = false;
                 dbAlbums.forEach(a => {
-                    if (!customAlbums.includes(a)) customAlbums.push(a);
+                    if (!customAlbums.includes(a)) {
+                        customAlbums.push(a);
+                        updated = true;
+                    }
                 });
+
+                if (updated) {
+                    saveAlbumsToLocalStorage();
+                }
 
                 initAlbumsUI();
                 renderGallery();
             }
         } catch (err) {
-            console.error("Failed to fetch memories from MongoDB:", err);
+            console.warn("Could not reach backend API, rendering local memories.", err);
+            renderGallery();
         }
     }
 
-    // Modals display trigger
+    function saveAlbumsToLocalStorage() {
+        localStorage.setItem("kiersty_custom_albums", JSON.stringify(customAlbums));
+    }
+
+    // Modal Control Handlers
     if (openModalBtn) openModalBtn.onclick = () => uploadModal.style.display = "flex";
     if (closeModalBtn) closeModalBtn.onclick = () => uploadModal.style.display = "none";
     if (closeViewBtn) closeViewBtn.onclick = () => closeViewModal();
@@ -89,58 +112,116 @@ document.addEventListener("DOMContentLoaded", () => {
         if (e.target === deleteConfirmModal) deleteConfirmModal.style.display = "none";
     };
 
-    // Form submission -> Save to MongoDB
-    memoryForm.addEventListener("submit", (e) => {
-        e.preventDefault();
-        const fileInput = document.getElementById("imageFile");
-        const captionInput = document.getElementById("imageCaption").value;
-        const albumVal = albumSelect.value;
+    // Upload New Memory
+    if (memoryForm) {
+        memoryForm.addEventListener("submit", (e) => {
+            e.preventDefault();
+            const fileInput = document.getElementById("imageFile");
+            const captionInput = document.getElementById("imageCaption") ? document.getElementById("imageCaption").value : "";
+            const albumVal = albumSelect ? albumSelect.value : "Daily";
 
-        if (fileInput.files && fileInput.files[0]) {
-            const reader = new FileReader();
-            reader.onload = async function (event) {
-                const newMemoryPayload = {
-                    image: event.target.result,
-                    caption: captionInput,
-                    album: albumVal
-                };
+            if (fileInput && fileInput.files && fileInput.files[0]) {
+                const reader = new FileReader();
+                reader.onload = async function (event) {
+                    const newMemoryPayload = {
+                        image: event.target.result,
+                        caption: captionInput,
+                        album: albumVal
+                    };
 
-                try {
-                    const response = await fetch(`${API_BASE}/memories`, {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify(newMemoryPayload)
-                    });
+                    try {
+                        const response = await fetch(`${API_BASE}/memories`, {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify(newMemoryPayload)
+                        });
 
-                    if (response.ok) {
-                        await loadMemoriesFromDB();
+                        if (response.ok) {
+                            await loadMemoriesFromDB();
+                        }
+                    } catch (err) {
+                        console.error("Error saving photo to database:", err);
+                        // Local fallback
+                        memories.unshift({ ...newMemoryPayload, id: Date.now().toString() });
+                        renderGallery();
                     }
-                } catch (err) {
-                    console.error("Error saving photo to database:", err);
-                }
-            };
-            reader.readAsDataURL(fileInput.files[0]);
-        }
+                };
+                reader.readAsDataURL(fileInput.files[0]);
+            }
 
-        memoryForm.reset();
-        uploadModal.style.display = "none";
-    });
+            memoryForm.reset();
+            uploadModal.style.display = "none";
+        });
+    }
 
-    // Create Album Modal handlers
-    cancelAlbumBtn.onclick = () => {
-        createAlbumModal.style.display = "none";
-        newAlbumNameInput.value = "";
-    };
+    // Create Album Handlers
+    if (cancelAlbumBtn) {
+        cancelAlbumBtn.onclick = () => {
+            createAlbumModal.style.display = "none";
+            if (newAlbumNameInput) newAlbumNameInput.value = "";
+        };
+    }
 
-    confirmAlbumBtn.onclick = () => {
-        const name = newAlbumNameInput.value.trim();
-        if (name && !customAlbums.includes(name)) {
-            customAlbums.push(name);
-            initAlbumsUI();
-        }
-        createAlbumModal.style.display = "none";
-        newAlbumNameInput.value = "";
-    };
+    if (confirmAlbumBtn) {
+        confirmAlbumBtn.onclick = () => {
+            const name = newAlbumNameInput ? newAlbumNameInput.value.trim() : "";
+            if (name && !customAlbums.includes(name)) {
+                customAlbums.push(name);
+                saveAlbumsToLocalStorage();
+                initAlbumsUI();
+            }
+            createAlbumModal.style.display = "none";
+            if (newAlbumNameInput) newAlbumNameInput.value = "";
+        };
+    }
+
+    // Edit/Manage Album Handlers
+    function openEditAlbumModal(albumName) {
+        albumToEdit = albumName;
+        if (editAlbumNameInput) editAlbumNameInput.value = albumName;
+        if (editAlbumModal) editAlbumModal.style.display = "flex";
+    }
+
+    if (cancelEditAlbumBtn) {
+        cancelEditAlbumBtn.onclick = () => {
+            if (editAlbumModal) editAlbumModal.style.display = "none";
+            albumToEdit = null;
+        };
+    }
+
+    if (saveAlbumRenameBtn) {
+        saveAlbumRenameBtn.onclick = () => {
+            const newName = editAlbumNameInput ? editAlbumNameInput.value.trim() : "";
+            if (newName && albumToEdit && newName !== albumToEdit) {
+                const idx = customAlbums.indexOf(albumToEdit);
+                if (idx !== -1) customAlbums[idx] = newName;
+                
+                if (selectedAlbum === albumToEdit) selectedAlbum = newName;
+
+                saveAlbumsToLocalStorage();
+                initAlbumsUI();
+                renderGallery();
+            }
+            if (editAlbumModal) editAlbumModal.style.display = "none";
+            albumToEdit = null;
+        };
+    }
+
+    if (deleteAlbumBtn) {
+        deleteAlbumBtn.onclick = () => {
+            if (albumToEdit) {
+                customAlbums = customAlbums.filter(a => a !== albumToEdit);
+                if (customAlbums.length === 0) customAlbums = ["Daily"]; // Keep at least 1
+                if (selectedAlbum === albumToEdit) selectedAlbum = "all";
+                
+                saveAlbumsToLocalStorage();
+                initAlbumsUI();
+                renderGallery();
+            }
+            if (editAlbumModal) editAlbumModal.style.display = "none";
+            albumToEdit = null;
+        };
+    }
 
     // Search filter listener
     if (searchInput) searchInput.addEventListener("input", renderGallery);
@@ -158,7 +239,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
 
         if (filtered.length === 0) {
-            galleryGrid.innerHTML = `<p style="grid-column: 1/-1; color: #7d656e;">No memories found matching your search. ✨</p>`;
+            galleryGrid.innerHTML = `<p style="grid-column: 1/-1; color: #7d656e; text-align: center; padding: 20px;">No memories found in this album. ✨</p>`;
             return;
         }
 
@@ -166,9 +247,9 @@ document.addEventListener("DOMContentLoaded", () => {
             const item = document.createElement("div");
             item.className = "gallery-item";
             item.innerHTML = `
-                <img src="${mem.image || mem.src}" alt="${mem.caption}">
+                <img src="${mem.image || mem.src}" alt="${mem.caption || 'Memory'}">
                 <div class="gallery-overlay">
-                    <span>${mem.caption}</span>
+                    <span>${mem.caption || ''}</span>
                     <small>📷 ${mem.album || 'Daily'}</small>
                 </div>
             `;
@@ -183,17 +264,17 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!mem) return;
 
         activeMemoryId = id;
-        viewImage.src = mem.image || mem.src;
-        viewCaption.textContent = mem.caption;
-        viewAlbumBadge.textContent = mem.album || "Daily";
+        if (viewImage) viewImage.src = mem.image || mem.src;
+        if (viewCaption) viewCaption.textContent = mem.caption || "";
+        if (viewAlbumBadge) viewAlbumBadge.textContent = mem.album || "Daily";
 
-        viewModeDetails.style.display = "block";
-        editForm.style.display = "none";
-        viewModal.style.display = "flex";
+        if (viewModeDetails) viewModeDetails.style.display = "block";
+        if (editForm) editForm.style.display = "none";
+        if (viewModal) viewModal.style.display = "flex";
     }
 
     function closeViewModal() {
-        viewModal.style.display = "none";
+        if (viewModal) viewModal.style.display = "none";
         activeMemoryId = null;
     }
 
@@ -202,32 +283,47 @@ document.addEventListener("DOMContentLoaded", () => {
         if (albumSelect) albumSelect.innerHTML = customAlbums.map(a => `<option value="${a}">${a}</option>`).join("");
         if (editAlbumSelect) editAlbumSelect.innerHTML = customAlbums.map(a => `<option value="${a}">${a}</option>`).join("");
 
-        const chipsHtml = `
-            <button class="album-chip ${selectedAlbum === 'all' ? 'active' : ''}" data-album="all">All Photos</button>
-            ${customAlbums.map(a => `
-                <button class="album-chip ${selectedAlbum === a ? 'active' : ''}" data-album="${a}">
-                    <span>${a}</span>
-                </button>
-            `).join("")}
-            <button class="album-chip add-album-chip" id="addAlbumBtn"><i class="fa-solid fa-plus"></i> New Album</button>
-        `;
-        if (albumsBar) albumsBar.innerHTML = chipsHtml;
+        if (albumsBar) {
+            const chipsHtml = `
+                <button class="album-chip ${selectedAlbum === 'all' ? 'active' : ''}" data-album="all">All Photos</button>
+                ${customAlbums.map(a => `
+                    <button class="album-chip ${selectedAlbum === a ? 'active' : ''}" data-album="${a}">
+                        <span>${a}</span>
+                        <i class="fa-solid fa-ellipsis-vertical edit-album-trigger" data-album-name="${a}" title="Manage Album" style="margin-left: 8px; cursor: pointer; opacity: 0.7;"></i>
+                    </button>
+                `).join("")}
+                <button class="album-chip add-album-chip" id="addAlbumBtn"><i class="fa-solid fa-plus"></i> New Album</button>
+            `;
+            albumsBar.innerHTML = chipsHtml;
 
-        document.querySelectorAll(".album-chip:not(.add-album-chip)").forEach(chip => {
-            chip.addEventListener("click", () => {
-                document.querySelectorAll(".album-chip").forEach(c => c.classList.remove("active"));
-                chip.classList.add("active");
-                selectedAlbum = chip.getAttribute("data-album");
-                renderGallery();
+            // Album chip click listener
+            document.querySelectorAll(".album-chip:not(.add-album-chip)").forEach(chip => {
+                chip.addEventListener("click", (e) => {
+                    if (e.target.classList.contains("edit-album-trigger")) return; 
+                    document.querySelectorAll(".album-chip").forEach(c => c.classList.remove("active"));
+                    chip.classList.add("active");
+                    selectedAlbum = chip.getAttribute("data-album");
+                    renderGallery();
+                });
             });
-        });
 
-        const addBtn = document.getElementById("addAlbumBtn");
-        if (addBtn) {
-            addBtn.addEventListener("click", () => {
-                createAlbumModal.style.display = "flex";
-                newAlbumNameInput.focus();
+            // Edit album three-dots icon click listener
+            document.querySelectorAll(".edit-album-trigger").forEach(icon => {
+                icon.addEventListener("click", (e) => {
+                    e.stopPropagation();
+                    const albumName = icon.getAttribute("data-album-name");
+                    openEditAlbumModal(albumName);
+                });
             });
+
+            // Add album button listener
+            const addBtn = document.getElementById("addAlbumBtn");
+            if (addBtn) {
+                addBtn.addEventListener("click", () => {
+                    if (createAlbumModal) createAlbumModal.style.display = "flex";
+                    if (newAlbumNameInput) newAlbumNameInput.focus();
+                });
+            }
         }
     }
 });
