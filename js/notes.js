@@ -3,7 +3,7 @@ const letters = {
     'miss-you': {
         title: "When You Miss Me 💖",
         content: "Hey beautiful,\n\nWhenever you feel lonely or miss me, just close your eyes for a second. Remember that no matter where we are, you are always the first and last thing on my mind.\n\nI'm always sending you a big warm hug. I love you so much!",
-        unlockDate: "2026-08-03"
+        unlockDate: "2026-08-31"
     },
     'stressed': {
         title: "When You Are Stressed 🌸",
