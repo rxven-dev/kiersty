@@ -112,46 +112,154 @@ document.addEventListener("DOMContentLoaded", () => {
         if (e.target === deleteConfirmModal) deleteConfirmModal.style.display = "none";
     };
 
-    // Upload New Memory
-    if (memoryForm) {
-        memoryForm.addEventListener("submit", (e) => {
-            e.preventDefault();
-            const fileInput = document.getElementById("imageFile");
-            const captionInput = document.getElementById("imageCaption") ? document.getElementById("imageCaption").value : "";
-            const albumVal = albumSelect ? albumSelect.value : "Daily";
+// Upload New Memory
+if (memoryForm) {
+    memoryForm.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const fileInput = document.getElementById("imageFile");
+        const captionInput = document.getElementById("imageCaption") ? document.getElementById("imageCaption").value : "";
+        const albumVal = albumSelect ? albumSelect.value : "Daily";
 
-            if (fileInput && fileInput.files && fileInput.files[0]) {
-                const reader = new FileReader();
-                reader.onload = async function (event) {
-                    const newMemoryPayload = {
-                        image: event.target.result,
-                        caption: captionInput,
-                        album: albumVal
-                    };
-
-                    try {
-                        const response = await fetch(`${API_BASE}/memories`, {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify(newMemoryPayload)
-                        });
-
-                        if (response.ok) {
-                            await loadMemoriesFromDB();
-                        }
-                    } catch (err) {
-                        console.error("Error saving photo to database:", err);
-                        // Local fallback
-                        memories.unshift({ ...newMemoryPayload, id: Date.now().toString() });
-                        renderGallery();
-                    }
+        if (fileInput && fileInput.files && fileInput.files[0]) {
+            const reader = new FileReader();
+            reader.onload = async function (event) {
+                const newMemoryPayload = {
+                    image: event.target.result,
+                    caption: captionInput,
+                    album: albumVal
                 };
-                reader.readAsDataURL(fileInput.files[0]);
-            }
 
-            memoryForm.reset();
-            uploadModal.style.display = "none";
+                try {
+                    console.log("Sending photo to server...");
+                    const response = await fetch(`${API_BASE}/memories`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(newMemoryPayload)
+                    });
+
+                    if (response.ok) {
+                        const savedItem = await response.json();
+                        console.log("SUCCESS! Saved to MongoDB:", savedItem);
+                        alert("Photo saved successfully to MongoDB! 🚀");
+                        await loadMemoriesFromDB();
+                    } else {
+                        const errorText = await response.text();
+                        console.error("Server error response:", errorText);
+                        alert(`Server rejected upload (${response.status}): ${errorText}`);
+                    }
+                } catch (err) {
+                    console.error("Network/Fetch error:", err);
+                    alert("Network error: Could not connect to http://localhost:5000. Is server.js running?");
+                }
+            };
+            reader.readAsDataURL(fileInput.files[0]);
+        }
+
+        memoryForm.reset();
+        uploadModal.style.display = "none";
+    });
+}
+
+    // ==================== EDIT PHOTO HANDLERS ====================
+    if (editMemoryBtn) {
+        editMemoryBtn.onclick = () => {
+            const mem = memories.find(m => (m._id || m.id) === activeMemoryId);
+            if (!mem) return;
+
+            if (editCaptionInput) editCaptionInput.value = mem.caption || "";
+            if (editAlbumSelect) editAlbumSelect.value = mem.album || "Daily";
+            
+            if (viewModeDetails) viewModeDetails.style.display = "none";
+            if (editForm) editForm.style.display = "block";
+        };
+    }
+
+    if (cancelEditBtn) {
+        cancelEditBtn.onclick = () => {
+            if (editForm) editForm.style.display = "none";
+            if (viewModeDetails) viewModeDetails.style.display = "block";
+        };
+    }
+
+    if (editForm) {
+        editForm.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const memIndex = memories.findIndex(m => (m._id || m.id) === activeMemoryId);
+            if (memIndex === -1) return;
+
+            const mem = memories[memIndex];
+            let updatedPayload = {
+                caption: editCaptionInput ? editCaptionInput.value : mem.caption,
+                album: editAlbumSelect ? editAlbumSelect.value : mem.album,
+                image: mem.image || mem.src
+            };
+
+            const performUpdate = async (payload) => {
+                try {
+                    const res = await fetch(`${API_BASE}/memories/${activeMemoryId}`, {
+                        method: "PUT",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (res.ok) {
+                        const updatedItem = await res.json();
+                        memories[memIndex] = updatedItem;
+                    } else {
+                        memories[memIndex] = { ...memories[memIndex], ...payload };
+                    }
+                } catch (err) {
+                    console.error("Failed to update photo in DB:", err);
+                    memories[memIndex] = { ...memories[memIndex], ...payload };
+                }
+
+                renderGallery();
+                openViewModal(activeMemoryId);
+            };
+
+            if (editFileInput && editFileInput.files && editFileInput.files[0]) {
+                const reader = new FileReader();
+                reader.onload = async (event) => {
+                    updatedPayload.image = event.target.result;
+                    await performUpdate(updatedPayload);
+                };
+                reader.readAsDataURL(editFileInput.files[0]);
+            } else {
+                await performUpdate(updatedPayload);
+            }
         });
+    }
+
+    // ==================== DELETE PHOTO HANDLERS ====================
+    if (deleteMemoryBtn) {
+        deleteMemoryBtn.onclick = () => {
+            if (deleteConfirmModal) deleteConfirmModal.style.display = "flex";
+        };
+    }
+
+    if (cancelDeleteBtn) {
+        cancelDeleteBtn.onclick = () => {
+            if (deleteConfirmModal) deleteConfirmModal.style.display = "none";
+        };
+    }
+
+    if (confirmDeleteBtn) {
+        confirmDeleteBtn.onclick = async () => {
+            if (activeMemoryId) {
+                try {
+                    await fetch(`${API_BASE}/memories/${activeMemoryId}`, {
+                        method: "DELETE"
+                    });
+                } catch (err) {
+                    console.error("Failed to delete memory from DB:", err);
+                }
+
+                memories = memories.filter(m => (m._id || m.id) !== activeMemoryId);
+                if (deleteConfirmModal) deleteConfirmModal.style.display = "none";
+                closeViewModal();
+                renderGallery();
+            }
+        };
     }
 
     // Create Album Handlers
@@ -211,7 +319,7 @@ document.addEventListener("DOMContentLoaded", () => {
         deleteAlbumBtn.onclick = () => {
             if (albumToEdit) {
                 customAlbums = customAlbums.filter(a => a !== albumToEdit);
-                if (customAlbums.length === 0) customAlbums = ["Daily"]; // Keep at least 1
+                if (customAlbums.length === 0) customAlbums = ["Daily"];
                 if (selectedAlbum === albumToEdit) selectedAlbum = "all";
                 
                 saveAlbumsToLocalStorage();

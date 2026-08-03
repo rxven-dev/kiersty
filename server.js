@@ -5,11 +5,12 @@ require('dotenv').config();
 
 const app = express();
 
-// Middleware
+// Middleware: Increase payload limits to 50MB for high-res Base64 photos
 app.use(cors());
-app.use(express.json({ limit: '15mb' })); // Increased limit for photo data
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
-// Connection setup with URL-encoded password (%21 instead of !) & TLS options
+// Connection setup
 const MONGO_URI = process.env.MONGO_URI || "mongodb+srv://dev-rxven:AdrianPogi_09867%21@cluster0.uoa2qvj.mongodb.net/kierstyDB?retryWrites=true&w=majority&appName=Cluster0";
 
 mongoose.connect(MONGO_URI, {
@@ -19,7 +20,7 @@ mongoose.connect(MONGO_URI, {
   .then(() => console.log("Connected to MongoDB successfully! 🚀"))
   .catch(err => console.error("MongoDB connection error:", err));
 
-// 1. Comment Schema & Model
+// 1. Comment Schema
 const CommentSchema = new mongoose.Schema({
   letterId: { type: String, required: true },
   text: { type: String, required: true },
@@ -27,22 +28,22 @@ const CommentSchema = new mongoose.Schema({
 });
 const Comment = mongoose.model('Comment', CommentSchema);
 
-// 2. Memory Schema & Model
+// 2. Memory Schema
 const MemorySchema = new mongoose.Schema({
-  caption: String,
+  caption: { type: String, default: "" },
   album: { type: String, default: "Daily" },
-  image: String, // Base64 image string
+  image: { type: String, required: true }, // Base64 image
   createdAt: { type: Date, default: Date.now }
 });
 const Memory = mongoose.model('Memory', MemorySchema);
 
-// 3. Album Schema & Model (For MongoDB persistence)
+// 3. Album Schema
 const AlbumSchema = new mongoose.Schema({
   name: { type: String, required: true, unique: true }
 });
 const Album = mongoose.model('Album', AlbumSchema);
 
-// 4. Bouquet Schema & Model
+// 4. Bouquet Schema
 const BouquetSchema = new mongoose.Schema({
   flower: String,
   wrap: String,
@@ -78,7 +79,6 @@ app.post('/api/comments', async (req, res) => {
 app.get('/api/albums', async (req, res) => {
   try {
     let albums = await Album.find();
-    // Seed default albums if empty
     if (albums.length === 0) {
       const defaults = ["Dates", "Trips", "Daily"];
       for (let d of defaults) {
@@ -106,7 +106,6 @@ app.put('/api/albums', async (req, res) => {
   try {
     const { oldName, newName } = req.body;
     await Album.findOneAndUpdate({ name: oldName }, { name: newName });
-    // Also update all memories assigned to this album
     await Memory.updateMany({ album: oldName }, { album: newName });
     res.json({ message: "Album renamed successfully" });
   } catch (err) {
@@ -118,7 +117,6 @@ app.delete('/api/albums/:name', async (req, res) => {
   try {
     const albumName = req.params.name;
     await Album.findOneAndDelete({ name: albumName });
-    // Reassign memories in this deleted album to "Daily"
     await Memory.updateMany({ album: albumName }, { album: "Daily" });
     res.json({ message: "Album deleted successfully" });
   } catch (err) {
@@ -140,8 +138,10 @@ app.post('/api/memories', async (req, res) => {
   try {
     const newMemory = new Memory(req.body);
     const saved = await newMemory.save();
+    console.log("📸 New photo saved successfully to MongoDB!");
     res.status(201).json(saved);
   } catch (err) {
+    console.error("❌ Error saving photo:", err.message);
     res.status(400).json({ error: err.message });
   }
 });
