@@ -112,19 +112,38 @@ document.addEventListener("DOMContentLoaded", () => {
         if (e.target === deleteConfirmModal) deleteConfirmModal.style.display = "none";
     };
 
-// Upload New Memory
-if (memoryForm) {
-    memoryForm.addEventListener("submit", (e) => {
-        e.preventDefault();
-        const fileInput = document.getElementById("imageFile");
-        const captionInput = document.getElementById("imageCaption") ? document.getElementById("imageCaption").value : "";
-        const albumVal = albumSelect ? albumSelect.value : "Daily";
+    // Helper: Formats Base64 images properly so they never render blank
+    function formatImageSrc(imgSrc) {
+        if (!imgSrc || imgSrc.trim() === "") return "";
+        if (!imgSrc.startsWith("data:") && !imgSrc.startsWith("http")) {
+            return `data:image/jpeg;base64,${imgSrc}`;
+        }
+        return imgSrc;
+    }
 
-        if (fileInput && fileInput.files && fileInput.files[0]) {
+    // Upload New Memory
+    if (memoryForm) {
+        memoryForm.addEventListener("submit", (e) => {
+            e.preventDefault();
+            const fileInput = document.getElementById("imageFile");
+            const captionInput = document.getElementById("imageCaption") ? document.getElementById("imageCaption").value : "";
+            const albumVal = albumSelect ? albumSelect.value : "Daily";
+
+            if (!fileInput || !fileInput.files || !fileInput.files[0]) {
+                alert("Please select a photo file!");
+                return;
+            }
+
             const reader = new FileReader();
             reader.onload = async function (event) {
+                const base64Data = event.target.result;
+                if (!base64Data) {
+                    alert("Failed to read image file.");
+                    return;
+                }
+
                 const newMemoryPayload = {
-                    image: event.target.result,
+                    image: base64Data,
                     caption: captionInput,
                     album: albumVal
                 };
@@ -140,7 +159,7 @@ if (memoryForm) {
                     if (response.ok) {
                         const savedItem = await response.json();
                         console.log("SUCCESS! Saved to MongoDB:", savedItem);
-                        alert("Photo saved successfully to MongoDB! 🚀");
+                        selectedAlbum = "all"; // Reset album filter so photo is visible immediately
                         await loadMemoriesFromDB();
                     } else {
                         const errorText = await response.text();
@@ -149,18 +168,17 @@ if (memoryForm) {
                     }
                 } catch (err) {
                     console.error("Network/Fetch error:", err);
-                    alert("Network error: Could not connect to http://localhost:5000. Is server.js running?");
+                    alert("Network error: Could not connect to http://localhost:5000.");
                 }
             };
             reader.readAsDataURL(fileInput.files[0]);
-        }
 
-        memoryForm.reset();
-        uploadModal.style.display = "none";
-    });
-}
+            memoryForm.reset();
+            uploadModal.style.display = "none";
+        });
+    }
 
-    // ==================== EDIT PHOTO HANDLERS ====================
+    // EDIT PHOTO HANDLERS
     if (editMemoryBtn) {
         editMemoryBtn.onclick = () => {
             const mem = memories.find(m => (m._id || m.id) === activeMemoryId);
@@ -230,7 +248,7 @@ if (memoryForm) {
         });
     }
 
-    // ==================== DELETE PHOTO HANDLERS ====================
+    // DELETE PHOTO HANDLERS
     if (deleteMemoryBtn) {
         deleteMemoryBtn.onclick = () => {
             if (deleteConfirmModal) deleteConfirmModal.style.display = "flex";
@@ -352,10 +370,12 @@ if (memoryForm) {
         }
 
         filtered.forEach(mem => {
+            const imgSrc = formatImageSrc(mem.image || mem.src);
+
             const item = document.createElement("div");
             item.className = "gallery-item";
             item.innerHTML = `
-                <img src="${mem.image || mem.src}" alt="${mem.caption || 'Memory'}">
+                <img src="${imgSrc}" alt="${mem.caption || 'Memory'}">
                 <div class="gallery-overlay">
                     <span>${mem.caption || ''}</span>
                     <small>📷 ${mem.album || 'Daily'}</small>
@@ -372,7 +392,9 @@ if (memoryForm) {
         if (!mem) return;
 
         activeMemoryId = id;
-        if (viewImage) viewImage.src = mem.image || mem.src;
+        const imgSrc = formatImageSrc(mem.image || mem.src);
+
+        if (viewImage) viewImage.src = imgSrc;
         if (viewCaption) viewCaption.textContent = mem.caption || "";
         if (viewAlbumBadge) viewAlbumBadge.textContent = mem.album || "Daily";
 
