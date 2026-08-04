@@ -1,7 +1,12 @@
 document.addEventListener("DOMContentLoaded", () => {
     // Dynamic API URL: Automatically uses host IP (e.g. 192.168.x.x or domain) instead of hardcoded localhost
-    const hostname = window.location.hostname || "localhost";
-    const API_BASE = `${window.location.protocol}//${hostname}:5000/api`;
+// ✅ NEW: Uses Railway backend when hosted on GitHub Pages
+const isGitHubPages = window.location.hostname.includes("github.io");
+const RAILWAY_URL = "https://kiersty-production.up.railway.app/api";
+
+const API_BASE = isGitHubPages 
+    ? RAILWAY_URL 
+    : `http://localhost:5000/api`;
 
     // Modals
     const uploadModal = document.getElementById("uploadModal");
