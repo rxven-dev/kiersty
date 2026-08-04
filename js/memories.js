@@ -73,34 +73,44 @@ const API_BASE = isGitHubPages
     initAlbumsUI();
     loadMemoriesFromDB();
 
-    async function loadMemoriesFromDB() {
-        try {
-            const res = await fetch(`${API_BASE}/memories`);
-            if (res.ok) {
-                memories = await res.json();
-                
-                // Merge MongoDB albums with local custom albums
-                const dbAlbums = memories.map(m => m.album).filter(Boolean);
-                let updated = false;
-                dbAlbums.forEach(a => {
-                    if (!customAlbums.includes(a)) {
-                        customAlbums.push(a);
-                        updated = true;
-                    }
-                });
+// ✅ REPLACE your existing loadMemoriesFromDB function with this one:
+async function loadMemoriesFromDB(retries = 3) {
+    if (galleryGrid) {
+        galleryGrid.innerHTML = `<p style="grid-column: 1/-1; color: #7d656e; text-align: center; padding: 20px;">Connecting to database... ✨</p>`;
+    }
 
-                if (updated) {
-                    saveAlbumsToLocalStorage();
+    try {
+        const res = await fetch(`${API_BASE}/memories`);
+        if (res.ok) {
+            memories = await res.json();
+            
+            const dbAlbums = memories.map(m => m.album).filter(Boolean);
+            let updated = false;
+            dbAlbums.forEach(a => {
+                if (!customAlbums.includes(a)) {
+                    customAlbums.push(a);
+                    updated = true;
                 }
+            });
 
-                initAlbumsUI();
-                renderGallery();
-            }
-        } catch (err) {
-            console.warn("Could not reach backend API, rendering local memories.", err);
+            if (updated) saveAlbumsToLocalStorage();
+
+            initAlbumsUI();
             renderGallery();
+        } else {
+            throw new Error(`Server status ${res.status}`);
+        }
+    } catch (err) {
+        console.warn("Backend starting up or unreachable. Retrying in 3s...", err);
+        if (retries > 0) {
+            setTimeout(() => loadMemoriesFromDB(retries - 1), 3000);
+        } else {
+            if (galleryGrid) {
+                galleryGrid.innerHTML = `<p style="grid-column: 1/-1; color: #7d656e; text-align: center; padding: 20px;">Could not connect to server. Please refresh or try uploading a picture. 📸</p>`;
+            }
         }
     }
+}
 
     function saveAlbumsToLocalStorage() {
         localStorage.setItem("kiersty_custom_albums", JSON.stringify(customAlbums));
