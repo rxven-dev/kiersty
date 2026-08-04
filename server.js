@@ -7,11 +7,15 @@ const app = express();
 
 // Middleware: Increase payload limits to 50MB for high-res Base64 photos
 // ✅ Replace app.use(cors()); with this:
+// ✅ Make sure line 9 in server.js looks exactly like this:
 app.use(cors({
   origin: '*',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
+
+// Add this line directly below it to allow pre-flight OPTIONS requests across all routes
+app.options('*', cors());
 
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
