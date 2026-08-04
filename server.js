@@ -6,7 +6,13 @@ require('dotenv').config();
 const app = express();
 
 // Middleware: Increase payload limits to 50MB for high-res Base64 photos
-app.use(cors());
+// ✅ Replace app.use(cors()); with this:
+app.use(cors({
+  origin: '*',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
