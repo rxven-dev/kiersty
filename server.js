@@ -1,20 +1,16 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-const path = require('path');
 require('dotenv').config();
 
 const app = express();
 
-// Middleware
+// Middleware: Increase payload limits to 50MB for high-res Base64 photos
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
-// Serve static files from root directory
-app.use(express.static(path.join(__dirname)));
-
-// MongoDB Connection setup
+// Connection setup
 const MONGO_URI = process.env.MONGO_URI || "mongodb+srv://dev-rxven:AdrianPogi_09867%21@cluster0.uoa2qvj.mongodb.net/kierstyDB?retryWrites=true&w=majority&appName=Cluster0";
 
 mongoose.connect(MONGO_URI, {
@@ -24,7 +20,7 @@ mongoose.connect(MONGO_URI, {
   .then(() => console.log("Connected to MongoDB successfully! 🚀"))
   .catch(err => console.error("MongoDB connection error:", err));
 
-// Schemas
+// 1. Comment Schema
 const CommentSchema = new mongoose.Schema({
   letterId: { type: String, required: true },
   text: { type: String, required: true },
@@ -32,25 +28,29 @@ const CommentSchema = new mongoose.Schema({
 });
 const Comment = mongoose.model('Comment', CommentSchema);
 
+// 2. Reaction Schema
 const ReactionSchema = new mongoose.Schema({
   letterId: { type: String, required: true, unique: true },
   emoji: { type: String, default: "" }
 });
 const Reaction = mongoose.model('Reaction', ReactionSchema);
 
+// 3. Memory Schema
 const MemorySchema = new mongoose.Schema({
   caption: { type: String, default: "" },
   album: { type: String, default: "Daily" },
-  image: { type: String, required: true },
+  image: { type: String, required: true }, // Base64 image
   createdAt: { type: Date, default: Date.now }
 });
 const Memory = mongoose.model('Memory', MemorySchema);
 
+// 4. Album Schema
 const AlbumSchema = new mongoose.Schema({
   name: { type: String, required: true, unique: true }
 });
 const Album = mongoose.model('Album', AlbumSchema);
 
+// 5. Bouquet Schema
 const BouquetSchema = new mongoose.Schema({
   flower: String,
   wrap: String,
@@ -60,7 +60,7 @@ const BouquetSchema = new mongoose.Schema({
 });
 const Bouquet = mongoose.model('Bouquet', BouquetSchema);
 
-// API ROUTES
+// ==================== API ROUTES ====================
 
 // --- COMMENTS ROUTES ---
 app.get('/api/comments/:letterId', async (req, res) => {
@@ -197,7 +197,7 @@ app.delete('/api/albums/:name', async (req, res) => {
   }
 });
 
-// --- MEMORIES ROUTES ---
+// --- MEMORIES (PHOTOS) ROUTES ---
 app.get('/api/memories', async (req, res) => {
   try {
     const memories = await Memory.find().sort({ createdAt: -1 });
@@ -266,8 +266,8 @@ app.delete('/api/bouquets/:id', async (req, res) => {
   }
 });
 
-// Start Server on all network interfaces (0.0.0.0)
+// Start Server
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, '0.0.0.0', () => {
+app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
