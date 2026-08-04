@@ -1,5 +1,7 @@
 document.addEventListener("DOMContentLoaded", () => {
-    const API_BASE = "http://localhost:5000/api";
+    // Dynamic API URL: Automatically uses host IP (e.g. 192.168.x.x or domain) instead of hardcoded localhost
+    const hostname = window.location.hostname || "localhost";
+    const API_BASE = `${window.location.protocol}//${hostname}:5000/api`;
 
     // Modals
     const uploadModal = document.getElementById("uploadModal");
@@ -48,7 +50,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const cancelDeleteBtn = document.getElementById("cancelDeleteBtn");
     const confirmDeleteBtn = document.getElementById("confirmDeleteBtn");
 
-    // State initialization with solid fallbacks
+    // State initialization
     let memories = [];
     let defaultAlbums = ["Dates", "Trips", "Daily"];
     let customAlbums = JSON.parse(localStorage.getItem("kiersty_custom_albums"));
@@ -112,7 +114,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (e.target === deleteConfirmModal) deleteConfirmModal.style.display = "none";
     };
 
-    // Helper: Formats Base64 images properly so they never render blank
+    // Helper: Formats Base64 images properly
     function formatImageSrc(imgSrc) {
         if (!imgSrc || imgSrc.trim() === "") return "";
         if (!imgSrc.startsWith("data:") && !imgSrc.startsWith("http")) {
@@ -149,7 +151,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 };
 
                 try {
-                    console.log("Sending photo to server...");
                     const response = await fetch(`${API_BASE}/memories`, {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
@@ -157,18 +158,14 @@ document.addEventListener("DOMContentLoaded", () => {
                     });
 
                     if (response.ok) {
-                        const savedItem = await response.json();
-                        console.log("SUCCESS! Saved to MongoDB:", savedItem);
-                        selectedAlbum = "all"; // Reset album filter so photo is visible immediately
+                        selectedAlbum = "all";
                         await loadMemoriesFromDB();
                     } else {
                         const errorText = await response.text();
-                        console.error("Server error response:", errorText);
-                        alert(`Server rejected upload (${response.status}): ${errorText}`);
+                        alert(`Server error (${response.status}): ${errorText}`);
                     }
                 } catch (err) {
-                    console.error("Network/Fetch error:", err);
-                    alert("Network error: Could not connect to http://localhost:5000.");
+                    alert(`Network error: Could not connect to backend server at ${API_BASE}`);
                 }
             };
             reader.readAsDataURL(fileInput.files[0]);
@@ -227,7 +224,6 @@ document.addEventListener("DOMContentLoaded", () => {
                         memories[memIndex] = { ...memories[memIndex], ...payload };
                     }
                 } catch (err) {
-                    console.error("Failed to update photo in DB:", err);
                     memories[memIndex] = { ...memories[memIndex], ...payload };
                 }
 
@@ -426,7 +422,6 @@ document.addEventListener("DOMContentLoaded", () => {
             `;
             albumsBar.innerHTML = chipsHtml;
 
-            // Album chip click listener
             document.querySelectorAll(".album-chip:not(.add-album-chip)").forEach(chip => {
                 chip.addEventListener("click", (e) => {
                     if (e.target.classList.contains("edit-album-trigger")) return; 
@@ -437,7 +432,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 });
             });
 
-            // Edit album three-dots icon click listener
             document.querySelectorAll(".edit-album-trigger").forEach(icon => {
                 icon.addEventListener("click", (e) => {
                     e.stopPropagation();
@@ -446,7 +440,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 });
             });
 
-            // Add album button listener
             const addBtn = document.getElementById("addAlbumBtn");
             if (addBtn) {
                 addBtn.addEventListener("click", () => {
