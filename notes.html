@@ -3,15 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Notes 💌</title>
+    <title>Letter 💌</title>
     <link rel="stylesheet" href="css/notes.css">
     <link rel="stylesheet" href="css/transition.css">
-    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Outfit:wght@300;400;500;600&family=Sacramento&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Outfit:wght@300;400;500;600;700&family=Sacramento&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
     <div class="floating-hearts">
-        <span>❤️</span><span>💖</span><span>🌸</span><span>✨</span><span>💕</span><span>💗</span>
+        <span>❤️</span><span>💖</span><span>🌸</span><span>✨</span><span>💕</span><span>💗</span><span>✨</span><span>💖</span>
     </div>
 
     <div class="wrapper">
@@ -21,70 +21,86 @@
                 <a href="home.html">Home</a>
                 <a href="time.html">Our Time</a>
                 <a href="memories.html">Memories</a>
-                <a href="notes.html" class="active">Notes</a>
+                <a href="notes.html" class="active">Letter</a>
+                <a href="jar.html">Jar</a>
+                <a href="wheel.html">Wheel</a>
             </nav>
         </header>
 
-<section class="letters-section">
-            <h2>Open When... 💌</h2>
-            <p class="section-subtitle">Tap a card whenever you need a reminder of how much I love you.</p>
-            
+        <section class="letters-section">
+            <div class="section-header">
+                <h2>Open When... 💌</h2>
+                <p class="section-subtitle">Little secret letters written just for you 🩷</p>
+            </div>
+
             <div class="letters-grid">
-                <div class="letter-card" onclick="openEnvelope('miss-you')">
-                    <div class="card-icon"><i class="fa-solid fa-envelope-open-text"></i></div>
-                    <h3>Testing</h3>
-                    <p class="card-status"><i class="fa-solid fa-envelope-open"></i> Click to open</p>
+                <div class="letter-card glass-card" onclick="openEnvelope('miss-you')">
+                    <div class="card-status-badge" id="badge-miss-you">🔒 Locked</div>
+                    <div class="envelope-icon"><i class="fa-solid fa-envelope-open-text"></i></div>
+                    <h3>When You Miss Me</h3>
+                    <p class="card-unlock-date" id="date-miss-you">Available: Aug 3, 2026</p>
                 </div>
-                <div class="letter-card" onclick="openEnvelope('stressed')">
-                    <div class="card-icon"><i class="fa-solid fa-mug-hot"></i></div>
-                    <h3>You are stressed</h3>
-                    <p class="card-status"><i class="fa-solid fa-envelope-open"></i> Click to open</p>
+
+                <div class="letter-card glass-card" onclick="openEnvelope('stressed')">
+                    <div class="card-status-badge" id="badge-stressed">🔒 Locked</div>
+                    <div class="envelope-icon"><i class="fa-solid fa-spa"></i></div>
+                    <h3>When You're Stressed</h3>
+                    <p class="card-unlock-date" id="date-stressed">Available: Aug 31, 2026</p>
                 </div>
-                <div class="letter-card" onclick="openEnvelope('need-smile')">
-                    <div class="card-icon"><i class="fa-solid fa-gem"></i></div>
-                    <h3>You need a smile</h3>
-                    <p class="card-status"><i class="fa-solid fa-envelope-open"></i> Click to open</p>
+
+                <div class="letter-card glass-card" onclick="openEnvelope('need-smile')">
+                    <div class="card-status-badge" id="badge-need-smile">🔒 Locked</div>
+                    <div class="envelope-icon"><i class="fa-solid fa-face-smile-beam"></i></div>
+                    <h3>When You Need a Smile</h3>
+                    <p class="card-unlock-date" id="date-need-smile">Available: Aug 31, 2026</p>
                 </div>
             </div>
         </section>
 
         <footer>
+            <p>Made with all my love 💕</p>
         </footer>
     </div>
 
     <div id="envelopeModal" class="envelope-modal">
         <div class="modal-backdrop" onclick="closeEnvelope()"></div>
         
-        <div class="envelope-wrapper" id="envelopeWrapper">
-            <div class="envelope">
-                <div class="flap top-flap"></div>
-                <div class="pocket"></div>
-<div class="letter-paper" id="letterPaper">
-    <button class="close-card-btn" onclick="closeEnvelope()">&times;</button>
-    <h3 id="letterTitle">Letter Title</h3>
-    <div class="letter-body" id="letterBody">Letter content goes here...</div>
-    
-    <div id="commentsListContainer" class="comments-list-container"></div>
+        <div class="envelope-container" id="envelopeContainer">
+            <button class="close-card-btn" onclick="closeEnvelope()">&times;</button>
+            
+            <div class="letter-paper" id="letterPaper">
+                <div class="letter-header">
+                    <h3 id="letterTitle">Letter Title</h3>
+                    <span class="letter-date-stamp" id="letterDateStamp"></span>
+                </div>
+                
+                <div class="letter-body" id="letterBody">
+                    Letter content goes here...
+                </div>
+                
+                <div class="reaction-container">
+                    <span>How did this make you feel?</span>
+                    <div class="reactions">
+                        <button class="react-btn" onclick="reactToLetter('❤️')">❤️ <span id="count-heart">0</span></button>
+                        <button class="react-btn" onclick="reactToLetter('👍')">👍 <span id="count-like">0</span></button>
+                        <button class="react-btn" onclick="reactToLetter('👎')">👎 <span id="count-dislike">0</span></button>
+                    </div>
+                </div>
 
-    <div class="reaction-container">
-        <span>How did this make you feel?</span>
-        <div class="reactions">
-            <button class="react-btn" onclick="reactToLetter('❤️')">❤️</button>
-            <button class="react-btn" onclick="reactToLetter('👍')">👍</button>
-            <button class="react-btn" onclick="reactToLetter('👎')">👎</button>
-        </div>
-        <p id="reactionFeedback" class="reaction-feedback"></p>
-    </div>
+                <div class="reply-container">
+                    <h4>Replies & Thoughts 💬</h4>
+                    <div id="commentsListContainer" class="comments-list-container"></div>
 
-    <div class="reply-container">
-        <textarea id="replyInput" placeholder="Write a reply back to him... ✍️"></textarea>
-        <button class="send-reply-btn" onclick="sendReply()">Send Reply 💕</button>
-        <p id="replyStatus" class="reply-status"></p>
-    </div>
-</div>
+                    <div class="reply-input-box">
+                        <textarea id="replyInput" placeholder="Write a reply back to him... ✍️"></textarea>
+                        <button class="send-reply-btn" onclick="sendReply()">Send Reply 💕</button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
+
+    <div id="toastContainer" class="toast-container"></div>
 
     <script src="js/notes.js"></script>
 </body>

@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reasons Why I Love You 🫙</title>
+    <link rel="stylesheet" href="css/jar.css">
+    <link rel="stylesheet" href="css/transition.css">
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Outfit:wght@300;400;500;600&family=Sacramento&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="floating-hearts">
+        <span>❤️</span><span>💖</span><span>🌸</span><span>✨</span><span>💕</span><span>💗</span>
+    </div>
+
+    <div class="wrapper">
+<header class="glass-nav">
+    <div class="logo">Kiersty Hub</div>
+    <nav>
+        <a href="home.html">Home</a>
+        <a href="time.html">Our Time</a>
+        <a href="memories.html">Memories</a>
+        <a href="notes.html">Letter</a>
+        <a href="jar.html" class="active">Jar</a>
+        <a href="wheel.html">Wheel</a>
+    </nav>
+</header>
+
+        <section class="jar-section">
+            <h2>Our Love Jar 🫙</h2>
+            <p class="subtitle">Tap the glass jar to pull out a reason why I love you 💕</p>
+
+            <div class="jar-container" id="jarContainer" onclick="pickReason()">
+                <div class="jar-lid"></div>
+                <div class="jar-glass">
+                    <div class="jar-label">100 Reasons Why I Love You 💕</div>
+                    <div class="jar-hearts">
+                        <span>💗</span><span>❤️</span><span>💖</span><span>💕</span>
+                        <span>💓</span><span>🌸</span><span>✨</span><span>💘</span>
+                        <span>💗</span><span>❤️</span><span>💖</span><span>💕</span>
+                    </div>
+                </div>
+            </div>
+
+            <p class="click-hint">👆 Click the jar to open a note!</p>
+
+            <div class="note-card-modal" id="noteModal" onclick="closeNoteModal(event)">
+                <div class="note-paper">
+                    <button class="close-btn" onclick="closeNoteModalForce()">&times;</button>
+                    <div class="heart-stamp">💖</div>
+                    <div class="note-content" id="noteContent">Click the jar to pull out a note!</div>
+                    <button class="another-btn" onclick="pickReason()">Pull Another Reason ✨</button>
+                </div>
+            </div>
+        </section>
+
+        <footer>
+            <p></p>
+        </footer>
+    </div>
+
+    <script>
+        const reasons = [
+            "Reason #1: The way your eyes light up when you smile.",
+            "Reason #2: How gentle and caring your heart is.",
+            "Reason #3: The cute sound of your voice when you say my name.",
+            "Reason #4: How comfortable I feel whenever I talk to you.",
+            "Reason #5: How you make even boring days feel so special.",
+            "Reason #6: Your adorable laugh that brightens up my day.",
+            "Reason #7: The way you listen to me and make me feel heard.",
+            "Reason #8: How pretty you are without even trying.",
+            "Reason #9: The way you make me smile just by sending a message.",
+            "Reason #10: How supportive you are in everything I do.",
+            "Reason #11: Your warm and comforting energy.",
+            "Reason #12: How smart and thoughtful you are.",
+            "Reason #13: The cute little habits you have that you don't even notice.",
+            "Reason #14: The way you smile when you drink coffee.",
+            "Reason #15: How you always know how to make me feel better.",
+            "Reason #16: Your silly jokes and funny random moments.",
+            "Reason #17: Because being with you feels like home.",
+            "Reason #18: The way you care so deeply about the people you love.",
+            "Reason #19: How you look in my favorite photos of you.",
+            "Reason #20: Simply because you are YOU, my babyy 💕"
+        ];
+
+        let lastIndex = -1;
+
+        function pickReason() {
+            let randomIndex;
+            do {
+                randomIndex = Math.floor(Math.random() * reasons.length);
+            } while (randomIndex === lastIndex && reasons.length > 1);
+
+            lastIndex = randomIndex;
+
+            const jar = document.getElementById('jarContainer');
+            jar.classList.add('shake');
+
+            setTimeout(() => {
+                jar.classList.remove('shake');
+                document.getElementById('noteContent').innerText = reasons[randomIndex];
+                document.getElementById('noteModal').classList.add('active');
+            }, 400);
+        }
+
+        function closeNoteModal(e) {
+            if (e.target.classList.contains('note-card-modal')) {
+                document.getElementById('noteModal').classList.remove('active');
+            }
+        }
+
+        function closeNoteModalForce() {
+            document.getElementById('noteModal').classList.remove('active');
+        }
+    </script>
+</body>
+</html>

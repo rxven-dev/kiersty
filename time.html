@@ -5,13 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Our Time ⏳</title>
     <link rel="stylesheet" href="css/time.css">
-<link rel="stylesheet" href="css/transition.css">
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&family=Sacramento&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/transition.css">
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Outfit:wght@300;400;500;600;700&family=Sacramento&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
     <div class="floating-hearts">
-        <span>❤️</span><span>💖</span><span>🌸</span><span>✨</span><span>💕</span><span>💗</span>
+        <span>❤️</span><span>💖</span><span>🌸</span><span>✨</span><span>💕</span><span>💗</span><span>✨</span><span>💖</span>
     </div>
 
     <div class="wrapper">
@@ -21,53 +21,116 @@
                 <a href="home.html">Home</a>
                 <a href="time.html" class="active">Our Time</a>
                 <a href="memories.html">Memories</a>
-                <a href="notes.html">Notes</a>
+                <a href="notes.html">Letter</a>
+                <a href="jar.html">Jar</a>
+                <a href="wheel.html">Wheel</a>
             </nav>
         </header>
 
         <section class="counter-section glass-card">
-            <h2>Time We've Been Talking Together ✨</h2>
-            <div class="countdown-grid">
+            <div class="status-badge">
+                <span class="pulse-dot"></span> Live Time Tracker
+            </div>
+            
+            <div class="header-with-heart">
+                <h2>Time We've Been Talking Together</h2>
+                <div class="pulsing-heart"><i class="fa-solid fa-heart"></i></div>
+            </div>
+            
+            <p class="counter-subtext">Every second with you is my favorite second 💕</p>
+
+            <div class="timer-display">
                 <div class="time-box">
                     <span id="days">00</span>
                     <p>Days</p>
                 </div>
+                <div class="time-divider">:</div>
                 <div class="time-box">
                     <span id="hours">00</span>
                     <p>Hours</p>
                 </div>
+                <div class="time-divider">:</div>
                 <div class="time-box">
                     <span id="minutes">00</span>
                     <p>Minutes</p>
                 </div>
-                <div class="time-box">
+                <div class="time-divider">:</div>
+                <div class="time-box highlight-seconds">
                     <span id="seconds">00</span>
                     <p>Seconds</p>
                 </div>
             </div>
         </section>
 
+        <section class="milestones-section">
+            <h3 class="milestones-title">Our Time in Numbers ✨</h3>
+            <div class="milestones-grid">
+                <div class="milestone-card glass-card">
+                    <div class="icon-box"><i class="fa-solid fa-calendar-week"></i></div>
+                    <div class="milestone-info">
+                        <h4 id="totalWeeks">0</h4>
+                        <p>Total Weeks</p>
+                    </div>
+                </div>
+
+                <div class="milestone-card glass-card">
+                    <div class="icon-box"><i class="fa-solid fa-clock"></i></div>
+                    <div class="milestone-info">
+                        <h4 id="totalHours">0</h4>
+                        <p>Total Hours</p>
+                    </div>
+                </div>
+
+                <div class="milestone-card glass-card">
+                    <div class="icon-box"><i class="fa-solid fa-comments"></i></div>
+                    <div class="milestone-info">
+                        <h4 id="totalMinutes">0</h4>
+                        <p>Total Minutes</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="love-quote-card glass-card">
+            <i class="fa-solid fa-quote-left quote-icon"></i>
+            <p class="quote-text">"I loved you yesterday, I love you still, I always have, I always will."</p>
+            <span class="quote-author">— Forever Yours 💕</span>
+        </section>
+
         <footer>
+            <p></p>
         </footer>
     </div>
 
     <script>
-        // CHANGE THIS TO YOUR ACTUAL ANNIVERSARY DATE (YYYY-MM-DDTHH:MM:SS)
-        const startDate = new Date("2026-07-17T00:00:00");
+        // Set your start date (YYYY-MM-DDTHH:MM:SS)
+        const startDate = new Date("2026-07-17T00:00:00"); 
 
         function updateCounter() {
             const now = new Date();
             const diff = now - startDate;
+
+            if (diff < 0) return; // Prevention if start date is in the future
 
             const days = Math.floor(diff / (1000 * 60 * 60 * 24));
             const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
             const minutes = Math.floor((diff / 1000 / 60) % 60);
             const seconds = Math.floor((diff / 1000) % 60);
 
+            // Live Main Timer Updates
             document.getElementById("days").innerText = String(days).padStart(2, '0');
             document.getElementById("hours").innerText = String(hours).padStart(2, '0');
             document.getElementById("minutes").innerText = String(minutes).padStart(2, '0');
             document.getElementById("seconds").innerText = String(seconds).padStart(2, '0');
+
+            // Milestone Calculations
+            const totalWeeks = Math.floor(days / 7);
+            const totalHours = Math.floor(diff / (1000 * 60 * 60));
+            const totalMinutes = Math.floor(diff / (1000 * 60));
+
+            document.getElementById("totalWeeks").innerText = totalWeeks.toLocaleString();
+            document.getElementById("totalHours").innerText = totalHours.toLocaleString();
+            document.getElementById("totalMinutes").innerText = totalMinutes.toLocaleString();
         }
 
         setInterval(updateCounter, 1000);

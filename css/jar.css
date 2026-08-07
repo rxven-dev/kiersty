@@ -1,0 +1,156 @@
+:root {
+    --primary-pink: #ff6584;
+    --deep-pink: #e04a6c;
+    --glass-bg: rgba(255, 255, 255, 0.65);
+    --card-shadow: 0 10px 30px rgba(255, 101, 132, 0.15);
+    --text-color: #4a3b40;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    font-family: 'Outfit', sans-serif;
+    background: linear-gradient(135deg, #fff0f3 0%, #ffd6e0 50%, #ffc2d1 100%);
+    color: var(--text-color);
+    min-height: 100vh;
+    overflow-x: hidden;
+}
+
+.floating-hearts {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    pointer-events: none; z-index: -1; overflow: hidden;
+}
+.floating-hearts span {
+    position: absolute; display: block; font-size: 1.5rem;
+    animation: floatUp 10s infinite linear; opacity: 0.4;
+}
+.floating-hearts span:nth-child(1) { left: 10%; animation-duration: 9s; }
+.floating-hearts span:nth-child(2) { left: 30%; animation-duration: 12s; }
+.floating-hearts span:nth-child(3) { left: 50%; animation-duration: 8s; }
+.floating-hearts span:nth-child(4) { left: 70%; animation-duration: 11s; }
+.floating-hearts span:nth-child(5) { left: 85%; animation-duration: 7s; }
+.floating-hearts span:nth-child(6) { left: 20%; animation-duration: 10s; }
+
+@keyframes floatUp {
+    0% { transform: translateY(100vh) scale(0.8) rotate(0deg); opacity: 0; }
+    50% { opacity: 0.6; }
+    100% { transform: translateY(-10vh) scale(1.2) rotate(360deg); opacity: 0; }
+}
+
+.wrapper { max-width: 1100px; margin: 0 auto; padding: 20px; }
+
+/* Navigation */
+.glass-nav {
+    display: flex; justify-content: space-between; align-items: center;
+    background: var(--glass-bg); backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    padding: 15px 30px; border-radius: 50px; margin-bottom: 40px;
+    box-shadow: var(--card-shadow);
+}
+.logo { font-family: 'Sacramento', cursive; font-size: 2rem; color: var(--primary-pink); font-weight: bold; }
+nav a { text-decoration: none; color: var(--text-color); margin-left: 20px; font-weight: 500; transition: color 0.3s; }
+nav a:hover, nav a.active { color: var(--primary-pink); }
+
+.jar-section { text-align: center; padding: 20px 0; }
+.jar-section h2 { font-size: 2.5rem; color: #3b2e33; margin-bottom: 5px; }
+.subtitle { color: #7d656e; margin-bottom: 30px; font-size: 1.1rem; }
+
+/* Glass Jar Styling */
+.jar-container {
+    position: relative; width: 220px; height: 280px; margin: 0 auto 20px;
+    cursor: pointer; transition: transform 0.3s ease;
+}
+.jar-container:hover { transform: scale(1.05); }
+
+.jar-lid {
+    width: 140px; height: 35px; background: linear-gradient(135deg, #d4a373, #faedcd);
+    margin: 0 auto; border-radius: 12px 12px 4px 4px;
+    border: 3px solid #b07d5b; box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.jar-glass {
+    width: 220px; height: 245px;
+    background: rgba(255, 255, 255, 0.45);
+    border: 4px solid rgba(255, 255, 255, 0.9);
+    border-radius: 30px 30px 50px 50px;
+    backdrop-filter: blur(4px);
+    box-shadow: 0 15px 35px rgba(255, 101, 132, 0.2), inset 0 0 25px rgba(255, 255, 255, 0.8);
+    position: relative; overflow: hidden;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+}
+
+.jar-label {
+    background: #fff; border: 2px dashed var(--primary-pink);
+    padding: 10px 15px; border-radius: 12px; font-family: 'Sacramento', cursive;
+    font-size: 1.3rem; color: var(--deep-pink); font-weight: bold;
+    z-index: 2; box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+}
+
+.jar-hearts {
+    position: absolute; bottom: 15px; width: 85%; display: flex; flex-wrap: wrap;
+    gap: 8px; justify-content: center; z-index: 1; opacity: 0.85;
+}
+.jar-hearts span { font-size: 1.4rem; animation: pulse 2s infinite alternate; }
+
+@keyframes pulse {
+    0% { transform: scale(1) rotate(0deg); }
+    100% { transform: scale(1.15) rotate(10deg); }
+}
+
+.shake { animation: shakeJar 0.4s ease-in-out; }
+@keyframes shakeJar {
+    0%, 100% { transform: rotate(0deg); }
+    20% { transform: rotate(-8deg) scale(1.05); }
+    40% { transform: rotate(8deg) scale(1.05); }
+    60% { transform: rotate(-5deg); }
+    80% { transform: rotate(5deg); }
+}
+
+.click-hint { font-weight: 500; color: var(--deep-pink); font-size: 1rem; }
+
+/* Note Card Modal */
+.note-card-modal {
+    display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(6px);
+    z-index: 1000; justify-content: center; align-items: center; padding: 20px;
+}
+.note-card-modal.active { display: flex; animation: fadeIn 0.3s ease; }
+
+.note-paper {
+    background: #fffdf9; width: 100%; max-width: 420px; padding: 35px 25px 25px;
+    border-radius: 20px; border: 2px solid #f4acb7;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+    position: relative; text-align: center; animation: popUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.close-btn {
+    position: absolute; top: 12px; right: 18px; font-size: 1.8rem;
+    border: none; background: none; color: #a88; cursor: pointer;
+}
+.close-btn:hover { color: var(--deep-pink); }
+
+.heart-stamp { font-size: 2.2rem; margin-bottom: 15px; }
+
+.note-content {
+    font-family: 'Caveat', cursive; font-size: 1.8rem; color: #3b2e33;
+    line-height: 1.4; margin-bottom: 25px; min-height: 80px;
+    display: flex; align-items: center; justify-content: center;
+}
+
+.another-btn {
+    background: var(--primary-pink); color: white; border: none;
+    padding: 12px 25px; border-radius: 30px; font-size: 1rem; font-weight: 600;
+    cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(255, 101, 132, 0.3);
+}
+.another-btn:hover { background: var(--deep-pink); transform: translateY(-2px); }
+
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes popUp { from { transform: scale(0.7); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+footer { text-align: center; padding: 40px 0 20px; color: #7d656e; font-weight: 500; }
+
+@media (max-width: 768px) {
+    .glass-nav { flex-direction: column; gap: 15px; text-align: center; border-radius: 25px; }
+    nav { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+    nav a { margin-left: 0; }
+}
