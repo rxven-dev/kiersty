@@ -30,7 +30,9 @@
             <div class="hero-content">
                 <span class="badge">Hi my Babyy 🌸</span>
                 <h1>You Make My World So Much Brighter</h1>
-                <p>Every little moment with you means everything.</p>
+<p class="typing-text">
+    <span id="typingContent"></span><span class="cursor">|</span>
+</p>
                 <div class="hero-buttons">
                     <a href="memories.html" class="btn primary-btn">Our Memories <i class="fa-solid fa-heart"></i></a>
                     <a href="notes.html" class="btn secondary-btn">Open a Note 💌</a>
@@ -112,5 +114,45 @@
 </div>
 
 <script src="js/bouquet.js"></script>
+<script>document.addEventListener("DOMContentLoaded", () => {
+    const messages = [
+        "Every little moment with you means everything. 💕",
+        "You make my everyday so much brighter! 🌸",
+        "Thank you for existing, my favorite person ✨",
+        "You have the sweetest smile in the world 💖"
+    ];
+    
+    const typingElement = document.getElementById("typingContent");
+    let msgIndex = 0;
+    let charIndex = 0;
+    let isDeleting = false;
+
+    function typeLoop() {
+        const currentMsg = messages[msgIndex];
+
+        if (isDeleting) {
+            typingElement.textContent = currentMsg.substring(0, charIndex - 1);
+            charIndex--;
+        } else {
+            typingElement.textContent = currentMsg.substring(0, charIndex + 1);
+            charIndex++;
+        }
+
+        let speed = isDeleting ? 30 : 60;
+
+        if (!isDeleting && charIndex === currentMsg.length) {
+            speed = 2500; // Pause at full message
+            isDeleting = true;
+        } else if (isDeleting && charIndex === 0) {
+            isDeleting = false;
+            msgIndex = (msgIndex + 1) % messages.length;
+            speed = 500; // Pause before typing next message
+        }
+
+        setTimeout(typeLoop, speed);
+    }
+
+    setTimeout(typeLoop, 500);
+});</script>
 </body>
 </html>

@@ -6,8 +6,9 @@
     <title>Reasons Why I Love You 🫙</title>
     <link rel="stylesheet" href="css/jar.css">
     <link rel="stylesheet" href="css/transition.css">
-    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Outfit:wght@300;400;500;600&family=Sacramento&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Outfit:wght@300;400;500;600;700&family=Sacramento&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 </head>
 <body>
     <div class="floating-hearts">
@@ -15,104 +16,157 @@
     </div>
 
     <div class="wrapper">
-<header class="glass-nav">
-    <div class="logo">Kiersty Hub</div>
-    <nav>
-        <a href="home.html">Home</a>
-        <a href="time.html">Our Time</a>
-        <a href="memories.html">Memories</a>
-        <a href="notes.html">Letter</a>
-        <a href="jar.html" class="active">Jar</a>
-        <a href="wheel.html">Wheel</a>
-    </nav>
-</header>
+        <header class="glass-nav">
+            <div class="logo">Kiersty Hub</div>
+            <nav>
+                <a href="home.html">Home</a>
+                <a href="time.html">Our Time</a>
+                <a href="memories.html">Memories</a>
+                <a href="notes.html">Letter</a>
+                <a href="jar.html" class="active">Jar</a>
+                <a href="wheel.html">Wheel</a>
+            </nav>
+        </header>
 
         <section class="jar-section">
-            <h2>Our Love Jar 🫙</h2>
-            <p class="subtitle">Tap the glass jar to pull out a reason why I love you 💕</p>
+            <div class="section-header">
+                <h2>Jar of 100 Reasons 💕</h2>
+                <p>Tap the jar to pull out a secret note written for you!</p>
+            </div>
 
-            <div class="jar-container" id="jarContainer" onclick="pickReason()">
+            <div class="jar-wrapper" onclick="pickReason()">
                 <div class="jar-lid"></div>
-                <div class="jar-glass">
-                    <div class="jar-label">100 Reasons Why I Love You 💕</div>
-                    <div class="jar-hearts">
-                        <span>💗</span><span>❤️</span><span>💖</span><span>💕</span>
-                        <span>💓</span><span>🌸</span><span>✨</span><span>💘</span>
-                        <span>💗</span><span>❤️</span><span>💖</span><span>💕</span>
+                <div class="jar-neck"></div>
+                <div class="jar-body" id="jarContainer">
+                    <div class="jar-notes-inside">
+                        <span class="paper-note n1">💌</span>
+                        <span class="paper-note n2">🌸</span>
+                        <span class="paper-note n3">💕</span>
+                        <span class="paper-note n4">✨</span>
+                        <span class="paper-note n5">💗</span>
+                        <span class="paper-note n6">💖</span>
+                    </div>
+                    <div class="jar-tag">
+                        <span>Pick Me! 🫙</span>
                     </div>
                 </div>
             </div>
 
-            <p class="click-hint">👆 Click the jar to open a note!</p>
-
-            <div class="note-card-modal" id="noteModal" onclick="closeNoteModal(event)">
-                <div class="note-paper">
-                    <button class="close-btn" onclick="closeNoteModalForce()">&times;</button>
-                    <div class="heart-stamp">💖</div>
-                    <div class="note-content" id="noteContent">Click the jar to pull out a note!</div>
-                    <button class="another-btn" onclick="pickReason()">Pull Another Reason ✨</button>
+            <div class="favorites-section glass-card">
+                <h3>Your Favorite Notes ⭐</h3>
+                <div id="favoritesList" class="favorites-list">
+                    <p class="empty-favs">No saved favorites yet! Click the ⭐ on a note to bookmark it.</p>
                 </div>
             </div>
         </section>
 
         <footer>
-            <p></p>
+            <p>Made with all my love 💕</p>
         </footer>
+    </div>
+
+    <div id="noteModal" class="note-modal">
+        <div class="modal-backdrop" onclick="closeNoteModal()"></div>
+        <div class="note-card glass-card">
+            <button class="close-btn" onclick="closeNoteModal()">&times;</button>
+            <div class="heart-stamp">💌</div>
+            <div class="note-content" id="noteContent">Reason loading...</div>
+            <div class="modal-actions">
+                <button class="fav-btn" id="favBtn" onclick="toggleFavorite()"><i class="fa-regular fa-star"></i> Save to Favorites</button>
+                <button class="another-btn" onclick="pickReason()">Pick Another 🫙</button>
+            </div>
+        </div>
     </div>
 
     <script>
         const reasons = [
-            "Reason #1: The way your eyes light up when you smile.",
-            "Reason #2: How gentle and caring your heart is.",
-            "Reason #3: The cute sound of your voice when you say my name.",
-            "Reason #4: How comfortable I feel whenever I talk to you.",
-            "Reason #5: How you make even boring days feel so special.",
-            "Reason #6: Your adorable laugh that brightens up my day.",
-            "Reason #7: The way you listen to me and make me feel heard.",
-            "Reason #8: How pretty you are without even trying.",
-            "Reason #9: The way you make me smile just by sending a message.",
-            "Reason #10: How supportive you are in everything I do.",
-            "Reason #11: Your warm and comforting energy.",
-            "Reason #12: How smart and thoughtful you are.",
-            "Reason #13: The cute little habits you have that you don't even notice.",
-            "Reason #14: The way you smile when you drink coffee.",
-            "Reason #15: How you always know how to make me feel better.",
-            "Reason #16: Your silly jokes and funny random moments.",
-            "Reason #17: Because being with you feels like home.",
-            "Reason #18: The way you care so deeply about the people you love.",
-            "Reason #19: How you look in my favorite photos of you.",
-            "Reason #20: Simply because you are YOU, my babyy 💕"
+            "Reason #1: Your adorable smile that brightens up my worst days.",
+            "Reason #2: How you always listen when I need someone to talk to.",
+            "Reason #3: The cute laugh you make when you find something really funny.",
+            "Reason #4: Your kind heart and how deeply you care for people.",
+            "Reason #5: How safe and peaceful I feel whenever I talk to you.",
+            "Reason #6: Your sweet random messages that make my day.",
+            "Reason #7: The unique and beautiful way your mind works.",
+            "Reason #8: How ridiculously cute you look when you're sleepy.",
+            "Reason #9: The way you encourage me to be my best self.",
+            "Reason #10: Your patience with me even when I'm being silly.",
+            "Reason #11: The warmth in your voice when you say my name.",
+            "Reason #12: How effortlessly you make me smile.",
+            "Reason #13: Simply because you are YOU, my babyy 💕"
         ];
 
-        let lastIndex = -1;
+        let currentReason = "";
 
         function pickReason() {
-            let randomIndex;
-            do {
-                randomIndex = Math.floor(Math.random() * reasons.length);
-            } while (randomIndex === lastIndex && reasons.length > 1);
-
-            lastIndex = randomIndex;
-
             const jar = document.getElementById('jarContainer');
             jar.classList.add('shake');
 
+            // Trigger confetti
+            confetti({
+                particleCount: 40,
+                spread: 50,
+                origin: { y: 0.6 },
+                colors: ['#ff6584', '#ffb3c1', '#ffffff']
+            });
+
             setTimeout(() => {
                 jar.classList.remove('shake');
-                document.getElementById('noteContent').innerText = reasons[randomIndex];
+                const randomIndex = Math.floor(Math.random() * reasons.length);
+                currentReason = reasons[randomIndex];
+                
+                document.getElementById('noteContent').innerText = currentReason;
+                updateFavButtonState();
                 document.getElementById('noteModal').classList.add('active');
             }, 400);
         }
 
-        function closeNoteModal(e) {
-            if (e.target.classList.contains('note-card-modal')) {
-                document.getElementById('noteModal').classList.remove('active');
+        function closeNoteModal() {
+            document.getElementById('noteModal').classList.remove('active');
+        }
+
+        // Favorites functionality
+        function toggleFavorite() {
+            let favs = JSON.parse(localStorage.getItem('fav_reasons') || '[]');
+            const index = favs.indexOf(currentReason);
+
+            if (index > -1) {
+                favs.splice(index, 1);
+            } else {
+                favs.push(currentReason);
+            }
+
+            localStorage.setItem('fav_reasons', JSON.stringify(favs));
+            updateFavButtonState();
+            renderFavorites();
+        }
+
+        function updateFavButtonState() {
+            const favs = JSON.parse(localStorage.getItem('fav_reasons') || '[]');
+            const btn = document.getElementById('favBtn');
+            if (favs.includes(currentReason)) {
+                btn.innerHTML = `<i class="fa-solid fa-star" style="color: #ffb703;"></i> Bookmarked`;
+            } else {
+                btn.innerHTML = `<i class="fa-regular fa-star"></i> Save to Favorites`;
             }
         }
 
-        function closeNoteModalForce() {
-            document.getElementById('noteModal').classList.remove('active');
+        function renderFavorites() {
+            const favs = JSON.parse(localStorage.getItem('fav_reasons') || '[]');
+            const container = document.getElementById('favoritesList');
+            
+            if (favs.length === 0) {
+                container.innerHTML = `<p class="empty-favs">No saved favorites yet! Click the ⭐ on a note to bookmark it.</p>`;
+                return;
+            }
+
+            container.innerHTML = favs.map(f => `
+                <div class="fav-item">
+                    <span>${f}</span>
+                </div>
+            `).join('');
         }
+
+        document.addEventListener('DOMContentLoaded', renderFavorites);
     </script>
 </body>
 </html>

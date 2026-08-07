@@ -545,3 +545,25 @@ nav a:hover, nav a.active {
     line-height: 1;
     cursor: pointer;
 }
+
+/* Typing Text Styling */
+.typing-text {
+    font-size: 1.25rem;
+    color: var(--text-color, #4a3b40);
+    min-height: 1.6em; /* Prevents layout shift while typing */
+    display: inline-block;
+    font-weight: 400;
+}
+
+/* Blinking Cursor Effect */
+.cursor {
+    font-weight: 300;
+    color: var(--primary-pink, #ff6584);
+    animation: blink 0.8s infinite;
+    margin-left: 2px;
+}
+
+@keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+}

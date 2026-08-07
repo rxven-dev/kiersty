@@ -6,7 +6,7 @@
     <title>Date Night Spinner 🎯</title>
     <link rel="stylesheet" href="css/wheel.css">
     <link rel="stylesheet" href="css/transition.css">
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&family=Sacramento&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Sacramento&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 </head>
@@ -16,159 +16,191 @@
     </div>
 
     <div class="wrapper">
-<header class="glass-nav">
-    <div class="logo">Kiersty Hub</div>
-    <nav>
-        <a href="home.html">Home</a>
-        <a href="time.html">Our Time</a>
-        <a href="memories.html">Memories</a>
-        <a href="notes.html">Letter</a>
-        <a href="jar.html">Jar</a>
-        <a href="wheel.html" class="active">Wheel</a>
-    </nav>
-</header>
+        <header class="glass-nav">
+            <div class="logo">Kiersty Hub</div>
+            <nav>
+                <a href="home.html">Home</a>
+                <a href="time.html">Our Time</a>
+                <a href="memories.html">Memories</a>
+                <a href="notes.html">Letter</a>
+                <a href="jar.html">Jar</a>
+                <a href="wheel.html" class="active">Wheel</a>
+            </nav>
+        </header>
 
         <section class="wheel-section">
-            <h2>Date Night Spinner 🎯</h2>
-            <p class="subtitle">Can't decide what to do? Let the wheel pick our date idea! 💕</p>
-
-            <div class="wheel-wrapper">
-                <div class="wheel-pointer">▼</div>
-                <div class="wheel-container">
-                    <canvas id="wheelCanvas" width="360" height="360"></canvas>
-                </div>
+            <div class="section-header">
+                <h2>Date Night Wheel 🎯</h2>
+                <p>Can't decide what to do? Let the wheel pick for us!</p>
             </div>
 
-            <button id="spinBtn" class="spin-btn" onclick="spinWheel()">Spin the Wheel! 🚀</button>
+            <div class="presets-bar">
+                <button class="preset-btn active" onclick="loadCategory('food')">🍕 Food & Drinks</button>
+                <button class="preset-btn" onclick="loadCategory('activities')">🎬 Activities</button>
+                <button class="preset-btn" onclick="loadCategory('cozy')">🏠 Cozy At-Home</button>
+            </div>
 
-            <div class="result-box" id="resultBox">
-                <h3>Our Date Idea:</h3>
-                <p id="resultText">Spin to find out! ✨</p>
+            <div class="wheel-container">
+                <div class="pointer">▼</div>
+                <canvas id="wheelCanvas" width="380" height="380"></canvas>
+            </div>
+
+            <button id="spinBtn" class="spin-btn" onclick="spinWheel()">Spin the Wheel! 💖</button>
+
+            <div class="custom-options glass-card">
+                <h3>Customize Slices ✍️</h3>
+                <div class="input-group">
+                    <input type="text" id="customInput" placeholder="Add custom idea...">
+                    <button onclick="addCustomOption()">Add</button>
+                </div>
+                <div id="optionsTags" class="options-tags"></div>
             </div>
         </section>
 
         <footer>
-            <p></p>
+            <p>Made with all my love 💕</p>
         </footer>
     </div>
 
-    <script>
-        const options = [
-            { label: "🍕 Pizza & Movie", color: "#ff8fa3" },
-            { label: "☕ Try a New Cafe", color: "#ffb3c1" },
-            { label: "🍦 Late Night Ice Cream", color: "#ffccd5" },
-            { label: "🛋️ Call & Play Games", color: "#ff758f" },
-            { label: "🌅 Watch Sunset", color: "#ff4d6d" },
-            { label: "🍔 Fast Food Craving", color: "#c77dff" },
-            { label: "🍿 Cinema Date Night", color: "#e0aaff" },
-            { label: "🎧 Listen Music Together", color: "#ffb703" }
-        ];
+    <div id="resultModal" class="result-modal">
+        <div class="modal-backdrop" onclick="closeResultModal()"></div>
+        <div class="result-card glass-card">
+            <span class="celebrate-icon">🎉</span>
+            <h3>Tonight's Winner!</h3>
+            <p id="winnerResult">Winner Name</p>
+            <button class="btn primary-btn" onclick="closeResultModal()">Let's Do It! 💕</button>
+        </div>
+    </div>
 
-        const canvas = document.getElementById('wheelCanvas');
-        const ctx = canvas.getContext('2d');
-        const numOptions = options.length;
-        const arcSize = (2 * Math.PI) / numOptions;
+    <script>
+        const categories = {
+            food: ["Pizza & Movies 🍕", "Ice Cream Date 🍦", "Cook Dinner Together 🍝", "Sushi Night 🍣", "Coffee Date ☕"],
+            activities: ["Arcade Night 🕹️", "Late Night Drive 🚘", "Stargazing 🌟", "Picnic in Park 🧺", "Bowling 🎳"],
+            cozy: ["Fort Building ⛺", "Board Games 🎲", "Bake Cookies 🍪", "Spa Night 🧖‍♀️", "Cuddle & Chat 🛋️"]
+        };
+
+        let currentOptions = [...categories.food];
+        const colors = ["#ff6584", "#ff8fa3", "#ffb3c1", "#ffccd5", "#ff4d6d", "#c77dff"];
         let currentAngle = 0;
         let isSpinning = false;
 
+        const canvas = document.getElementById("wheelCanvas");
+        const ctx = canvas.getContext("2d");
+
         function drawWheel() {
-            const centerX = canvas.width / 2;
-            const centerY = canvas.height / 2;
-            const radius = canvas.width / 2 - 5;
+            const numOptions = currentOptions.length;
+            const arcSize = (2 * Math.PI) / numOptions;
+            const radius = canvas.width / 2;
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            for (let i = 0; i < numOptions; i++) {
+            currentOptions.forEach((option, i) => {
                 const angle = currentAngle + i * arcSize;
                 
-                // Sector
+                // Draw slice
                 ctx.beginPath();
-                ctx.fillStyle = options[i].color;
-                ctx.moveTo(centerX, centerY);
-                ctx.arc(centerX, centerY, radius, angle, angle + arcSize);
-                ctx.lineTo(centerX, centerY);
+                ctx.fillStyle = colors[i % colors.length];
+                ctx.moveTo(radius, radius);
+                ctx.arc(radius, radius, radius - 10, angle, angle + arcSize);
+                ctx.lineTo(radius, radius);
                 ctx.fill();
-                ctx.strokeStyle = '#ffffff';
+                ctx.strokeStyle = "#ffffff";
                 ctx.lineWidth = 3;
                 ctx.stroke();
 
-                // Text Label
+                // Draw Text
                 ctx.save();
-                ctx.fillStyle = '#ffffff';
-                ctx.font = 'bold 13px Outfit, sans-serif';
-                ctx.translate(centerX, centerY);
+                ctx.fillStyle = "#ffffff";
+                ctx.font = "bold 14px Outfit";
+                ctx.translate(radius, radius);
                 ctx.rotate(angle + arcSize / 2);
-                ctx.textAlign = 'right';
-                ctx.fillText(options[i].label, radius - 15, 5);
+                ctx.textAlign = "right";
+                ctx.fillText(option, radius - 25, 5);
                 ctx.restore();
-            }
-
-            // Center Pin Circle
-            ctx.beginPath();
-            ctx.arc(centerX, centerY, 25, 0, 2 * Math.PI);
-            ctx.fillStyle = '#ffffff';
-            ctx.fill();
-            ctx.strokeStyle = '#ff4d6d';
-            ctx.lineWidth = 4;
-            ctx.stroke();
+            });
         }
 
-        drawWheel();
+        function loadCategory(cat) {
+            if (isSpinning) return;
+            currentOptions = [...categories[cat]];
+            document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+            event.target.classList.add('active');
+            renderTags();
+            drawWheel();
+        }
 
         function spinWheel() {
             if (isSpinning) return;
             isSpinning = true;
 
-            const spinBtn = document.getElementById('spinBtn');
-            spinBtn.disabled = true;
-            document.getElementById('resultText').innerText = "Spinning... 🎲";
-
-            const extraRotations = (Math.floor(Math.random() * 5) + 5) * 360;
-            const randomDegree = Math.floor(Math.random() * 360);
-            const totalRotationDegrees = extraRotations + randomDegree;
-            
+            const spinAngle = Math.random() * 1000 + 2000;
             const duration = 4000;
-            const startTimestamp = performance.now();
-            const startAngle = currentAngle;
+            const start = performance.now();
 
-            function animateWheel(now) {
-                const elapsed = now - startTimestamp;
+            function animate(now) {
+                const elapsed = now - start;
                 const progress = Math.min(elapsed / duration, 1);
-                
-                // Ease Out Quad
                 const easeOut = 1 - Math.pow(1 - progress, 3);
-                
-                const degreesToRadians = (deg) => (deg * Math.PI) / 180;
-                currentAngle = startAngle + degreesToRadians(totalRotationDegrees) * easeOut;
 
+                currentAngle = (easeOut * spinAngle * Math.PI) / 180;
                 drawWheel();
 
                 if (progress < 1) {
-                    requestAnimationFrame(animateWheel);
+                    requestAnimationFrame(animate);
                 } else {
                     isSpinning = false;
-                    spinBtn.disabled = false;
-                    
-                    // Calculate Selected Slice
-                    const normalizedDegrees = (360 - ((currentAngle * 180 / Math.PI) % 360) + 270) % 360;
-                    const winningIndex = Math.floor(normalizedDegrees / (360 / numOptions)) % numOptions;
-                    
-                    const winningOption = options[winningIndex].label;
-                    document.getElementById('resultText').innerText = winningOption + " 💕";
-
-                    // Trigger Confetti Celebration
-                    if (typeof confetti === 'function') {
-                        confetti({
-                            particleCount: 80,
-                            spread: 60,
-                            origin: { y: 0.7 }
-                        });
-                    }
+                    calculateWinner();
                 }
             }
 
-            requestAnimationFrame(animateWheel);
+            requestAnimationFrame(animate);
         }
+
+        function calculateWinner() {
+            const numOptions = currentOptions.length;
+            const arcSize = (2 * Math.PI) / numOptions;
+            const normalizedAngle = (2 * Math.PI - (currentAngle % (2 * Math.PI)) + Math.PI / 2) % (2 * Math.PI);
+            const winningIndex = Math.floor(normalizedAngle / arcSize) % numOptions;
+
+            const winner = currentOptions[winningIndex];
+            document.getElementById('winnerResult').innerText = winner;
+
+            confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+            document.getElementById('resultModal').classList.add('active');
+        }
+
+        function closeResultModal() {
+            document.getElementById('resultModal').classList.remove('active');
+        }
+
+        function addCustomOption() {
+            const input = document.getElementById('customInput');
+            if (input.value.trim() !== '') {
+                currentOptions.push(input.value.trim());
+                input.value = '';
+                renderTags();
+                drawWheel();
+            }
+        }
+
+        function removeOption(index) {
+            if (currentOptions.length <= 2) return;
+            currentOptions.splice(index, 1);
+            renderTags();
+            drawWheel();
+        }
+
+        function renderTags() {
+            const tagsContainer = document.getElementById('optionsTags');
+            tagsContainer.innerHTML = currentOptions.map((opt, i) => `
+                <span class="tag">${opt} <i class="fa-solid fa-xmark" onclick="removeOption(${i})"></i></span>
+            `).join('');
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            renderTags();
+            drawWheel();
+        });
     </script>
 </body>
 </html>
