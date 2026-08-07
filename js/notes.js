@@ -17,7 +17,15 @@ const letters = {
     }
 };
 
+// -------------------------------------------------------------
+// BACKEND CONFIGURATION
+// -------------------------------------------------------------
+const API_BASE_URL = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
+    ? "http://localhost:5000"
+    : "https://your-backend-url.onrender.com"; // <-- Update this to your deployed Render URL if hosted!
+
 let currentLetterId = null;
+let liveSyncTimer = null;
 
 document.addEventListener("DOMContentLoaded", () => {
     updateCardLockStatus();
@@ -81,6 +89,7 @@ function openEnvelope(id) {
     if (titleEl) titleEl.innerText = letter.title;
     if (bodyEl) bodyEl.innerText = letter.content;
 
+    // Load initial MongoDB data
     loadReactions();
     loadSavedComments();
 
@@ -88,9 +97,17 @@ function openEnvelope(id) {
     if (modal) {
         modal.classList.add("active");
     }
+
+    // Start 3-second polling timer for cross-device sync
+    if (liveSyncTimer) clearInterval(liveSyncTimer);
+    liveSyncTimer = setInterval(() => {
+        if (currentLetterId) {
+            loadReactions();
+            loadSavedComments();
+        }
+    }, 3000);
 }
 
-// Alias for backwards compatibility with HTML onclick="openLetter('id')"
 function openLetter(id) {
     openEnvelope(id);
 }
@@ -101,66 +118,88 @@ function closeEnvelope() {
         modal.classList.remove("active");
     }
     currentLetterId = null;
+
+    // Stop timer on modal close
+    if (liveSyncTimer) {
+        clearInterval(liveSyncTimer);
+        liveSyncTimer = null;
+    }
 }
 
 function closeLetterModal() {
     closeEnvelope();
 }
 
-// Reactions Management with Toggle Support
-function reactToLetter(emoji) {
+// =============================================================
+// REACTION FUNCTIONS (MongoDB API)
+// =============================================================
+async function reactToLetter(emoji) {
     if (!currentLetterId) return;
 
-    const countKey = `reactions_${currentLetterId}`;
-    const userVoteKey = `user_voted_${currentLetterId}`;
+    try {
+        const res = await fetch(`${API_BASE_URL}/api/reactions/${currentLetterId}`);
+        const data = await res.json();
 
-    const counts = JSON.parse(localStorage.getItem(countKey) || '{"❤️": 0, "👍": 0, "👎": 0}');
-    const userVotes = JSON.parse(localStorage.getItem(userVoteKey) || '{"❤️": false, "👍": false, "👎": false}');
+        let counts = data.counts || { "❤️": 0, "👍": 0, "👎": 0 };
+        let userVotes = data.userVotes || { "❤️": false, "👍": false, "👎": false };
 
-    if (userVotes[emoji]) {
-        counts[emoji] = Math.max(0, (counts[emoji] || 0) - 1);
-        userVotes[emoji] = false;
-        showToast(`Removed reaction ${emoji}`, "error");
-    } else {
-        counts[emoji] = (counts[emoji] || 0) + 1;
-        userVotes[emoji] = true;
-        showToast(`Reacted ${emoji} 💕`, "success");
+        if (userVotes[emoji]) {
+            counts[emoji] = Math.max(0, (counts[emoji] || 0) - 1);
+            userVotes[emoji] = false;
+            showToast(`Removed reaction ${emoji}`, "error");
+        } else {
+            counts[emoji] = (counts[emoji] || 0) + 1;
+            userVotes[emoji] = true;
+            showToast(`Reacted ${emoji} 💕`, "success");
+        }
+
+        await fetch(`${API_BASE_URL}/api/reactions/${currentLetterId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ counts, userVotes })
+        });
+
+        loadReactions();
+    } catch (err) {
+        console.error("Error toggling reaction:", err);
+        showToast("Server connection error ❌", "error");
     }
-
-    localStorage.setItem(countKey, JSON.stringify(counts));
-    localStorage.setItem(userVoteKey, JSON.stringify(userVotes));
-
-    loadReactions();
 }
 
-function loadReactions() {
+async function loadReactions() {
     if (!currentLetterId) return;
 
-    const countKey = `reactions_${currentLetterId}`;
-    const userVoteKey = `user_voted_${currentLetterId}`;
+    try {
+        const res = await fetch(`${API_BASE_URL}/api/reactions/${currentLetterId}`);
+        const data = await res.json();
 
-    const counts = JSON.parse(localStorage.getItem(countKey) || '{"❤️": 0, "👍": 0, "👎": 0}');
-    const userVotes = JSON.parse(localStorage.getItem(userVoteKey) || '{"❤️": false, "👍": false, "👎": false}');
+        const counts = data.counts || { "❤️": 0, "👍": 0, "👎": 0 };
+        const userVotes = data.userVotes || { "❤️": false, "👍": false, "👎": false };
 
-    const countHeart = document.getElementById("count-heart");
-    const countLike = document.getElementById("count-like");
-    const countDislike = document.getElementById("count-dislike");
+        const countHeart = document.getElementById("count-heart");
+        const countLike = document.getElementById("count-like");
+        const countDislike = document.getElementById("count-dislike");
 
-    if (countHeart) countHeart.innerText = counts["❤️"] || 0;
-    if (countLike) countLike.innerText = counts["👍"] || 0;
-    if (countDislike) countDislike.innerText = counts["👎"] || 0;
+        if (countHeart) countHeart.innerText = counts["❤️"] || 0;
+        if (countLike) countLike.innerText = counts["👍"] || 0;
+        if (countDislike) countDislike.innerText = counts["👎"] || 0;
 
-    const btnHeart = document.getElementById("btn-react-heart");
-    const btnLike = document.getElementById("btn-react-like");
-    const btnDislike = document.getElementById("btn-react-dislike");
+        const btnHeart = document.querySelector(".react-btn[onclick*='❤️']");
+        const btnLike = document.querySelector(".react-btn[onclick*='👍']");
+        const btnDislike = document.querySelector(".react-btn[onclick*='👎']");
 
-    if (btnHeart) btnHeart.classList.toggle("active", !!userVotes["❤️"]);
-    if (btnLike) btnLike.classList.toggle("active", !!userVotes["👍"]);
-    if (btnDislike) btnDislike.classList.toggle("active", !!userVotes["👎"]);
+        if (btnHeart) btnHeart.classList.toggle("active", !!userVotes["❤️"]);
+        if (btnLike) btnLike.classList.toggle("active", !!userVotes["👍"]);
+        if (btnDislike) btnDislike.classList.toggle("active", !!userVotes["👎"]);
+    } catch (err) {
+        console.error("Error loading reactions:", err);
+    }
 }
 
-// Comments / Replies Management
-function sendReply() {
+// =============================================================
+// COMMENT / REPLY FUNCTIONS (MongoDB API)
+// =============================================================
+async function sendReply() {
     if (!currentLetterId) return;
 
     const input = document.getElementById("replyInput");
@@ -173,52 +212,81 @@ function sendReply() {
         return;
     }
 
-    const key = `comments_${currentLetterId}`;
-    const comments = JSON.parse(localStorage.getItem(key) || '[]');
-    comments.push({ text: text, date: new Date().toLocaleDateString() });
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/comments`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                letterId: currentLetterId,
+                text: text,
+                author: "Babyy 💕"
+            })
+        });
 
-    localStorage.setItem(key, JSON.stringify(comments));
-    input.value = "";
-
-    showToast("Reply saved! 💕", "success");
-    loadSavedComments();
+        if (response.ok) {
+            input.value = "";
+            showToast("Reply sent! 💕", "success");
+            loadSavedComments();
+        } else {
+            showToast("Failed to send reply ❌", "error");
+        }
+    } catch (err) {
+        console.error("Error sending reply:", err);
+        showToast("Server connection error ❌", "error");
+    }
 }
 
-function loadSavedComments() {
+async function loadSavedComments() {
     if (!currentLetterId) return;
 
     const container = document.getElementById("commentsListContainer");
     if (!container) return;
 
-    const key = `comments_${currentLetterId}`;
-    const comments = JSON.parse(localStorage.getItem(key) || '[]');
+    try {
+        const res = await fetch(`${API_BASE_URL}/api/comments/${currentLetterId}`);
+        const comments = await res.json();
 
-    container.innerHTML = "";
+        container.innerHTML = "";
 
-    comments.forEach((comment, index) => {
-        const item = document.createElement("div");
-        item.className = "comment-item";
-        item.innerHTML = `
-            <span>${escapeHtml(comment.text)}</span>
-            <div class="comment-actions">
-                <button class="action-btn" onclick="deleteComment(${index})"><i class="fa-solid fa-trash"></i></button>
-            </div>
-        `;
-        container.appendChild(item);
-    });
+        if (!comments || comments.length === 0) {
+            container.innerHTML = `<p class="no-replies">No replies yet. Be the first to leave one! 🌸</p>`;
+            return;
+        }
+
+        comments.forEach((comment) => {
+            const item = document.createElement("div");
+            item.className = "comment-item";
+            item.innerHTML = `
+                <span>${escapeHtml(comment.text)}</span>
+                <div class="comment-actions">
+                    <button class="action-btn" onclick="deleteComment('${comment._id}')"><i class="fa-solid fa-trash"></i></button>
+                </div>
+            `;
+            container.appendChild(item);
+        });
+    } catch (err) {
+        console.error("Error loading comments:", err);
+    }
 }
 
-function deleteComment(index) {
-    if (!currentLetterId) return;
+async function deleteComment(id) {
+    if (!id) return;
 
-    const key = `comments_${currentLetterId}`;
-    let comments = JSON.parse(localStorage.getItem(key) || '[]');
+    try {
+        const res = await fetch(`${API_BASE_URL}/api/comments/${id}`, {
+            method: 'DELETE'
+        });
 
-    comments.splice(index, 1);
-    localStorage.setItem(key, JSON.stringify(comments));
-
-    showToast("Reply deleted 💕", "success");
-    loadSavedComments();
+        if (res.ok) {
+            showToast("Reply deleted 💕", "success");
+            loadSavedComments();
+        } else {
+            showToast("Failed to delete reply ❌", "error");
+        }
+    } catch (err) {
+        console.error("Error deleting comment:", err);
+        showToast("Server error ❌", "error");
+    }
 }
 
 function escapeHtml(str) {
