@@ -23,23 +23,24 @@ document.addEventListener("DOMContentLoaded", () => {
     updateCardLockStatus();
 });
 
-function getTodayString() {
-    const today = new Date();
-    const year = today.getFullYear();
-    const month = String(today.getMonth() + 1).padStart(2, '0');
-    const day = String(today.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
+// Helper: Convert YYYY-MM-DD string to Date object at local midnight
+function parseDate(dateStr) {
+    const [year, month, day] = dateStr.split('-').map(Number);
+    return new Date(year, month - 1, day);
 }
 
 function updateCardLockStatus() {
-    const todayStr = getTodayString();
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
     Object.keys(letters).forEach(id => {
         const letter = letters[id];
         const badge = document.getElementById(`badge-${id}`);
         const dateText = document.getElementById(`date-${id}`);
 
-        if (todayStr >= letter.unlockDate) {
+        const unlockDateObj = parseDate(letter.unlockDate);
+
+        if (today.getTime() >= unlockDateObj.getTime()) {
             if (badge) {
                 badge.innerText = "🔓 Unlocked";
                 badge.classList.add("unlocked");
@@ -63,33 +64,53 @@ function openEnvelope(id) {
     const letter = letters[id];
     if (!letter) return;
 
-    const todayStr = getTodayString();
-    if (todayStr < letter.unlockDate) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const unlockDateObj = parseDate(letter.unlockDate);
+
+    if (today.getTime() < unlockDateObj.getTime()) {
         showToast(`This letter is locked until ${letter.unlockDate}! 🔒`, "error");
         return;
     }
 
     currentLetterId = id;
-    document.getElementById("letterTitle").innerText = letter.title;
-    document.getElementById("letterBody").innerText = letter.content;
+
+    const titleEl = document.getElementById("letterTitle");
+    const bodyEl = document.getElementById("letterBody");
+
+    if (titleEl) titleEl.innerText = letter.title;
+    if (bodyEl) bodyEl.innerText = letter.content;
 
     loadReactions();
     loadSavedComments();
 
-    document.getElementById("envelopeModal").classList.add("active");
+    const modal = document.getElementById("envelopeModal") || document.getElementById("letterModal");
+    if (modal) {
+        modal.classList.add("active");
+    }
+}
+
+// Alias for backwards compatibility with HTML onclick="openLetter('id')"
+function openLetter(id) {
+    openEnvelope(id);
 }
 
 function closeEnvelope() {
-    document.getElementById("envelopeModal").classList.remove("active");
+    const modal = document.getElementById("envelopeModal") || document.getElementById("letterModal");
+    if (modal) {
+        modal.classList.remove("active");
+    }
     currentLetterId = null;
 }
 
-// Reactions Management
-// Reactions Management with Toggle Support (One vote per user per reaction)
+function closeLetterModal() {
+    closeEnvelope();
+}
+
+// Reactions Management with Toggle Support
 function reactToLetter(emoji) {
     if (!currentLetterId) return;
 
-    // Retrieve storage structures
     const countKey = `reactions_${currentLetterId}`;
     const userVoteKey = `user_voted_${currentLetterId}`;
 
@@ -97,22 +118,18 @@ function reactToLetter(emoji) {
     const userVotes = JSON.parse(localStorage.getItem(userVoteKey) || '{"❤️": false, "👍": false, "👎": false}');
 
     if (userVotes[emoji]) {
-        // Undo reaction: Decrease count and mark as unvoted
         counts[emoji] = Math.max(0, (counts[emoji] || 0) - 1);
         userVotes[emoji] = false;
         showToast(`Removed reaction ${emoji}`, "error");
     } else {
-        // Add reaction: Increase count and mark as voted
         counts[emoji] = (counts[emoji] || 0) + 1;
         userVotes[emoji] = true;
         showToast(`Reacted ${emoji} 💕`, "success");
     }
 
-    // Save back to localStorage
     localStorage.setItem(countKey, JSON.stringify(counts));
     localStorage.setItem(userVoteKey, JSON.stringify(userVotes));
 
-    // Update UI display & button active states
     loadReactions();
 }
 
@@ -125,12 +142,14 @@ function loadReactions() {
     const counts = JSON.parse(localStorage.getItem(countKey) || '{"❤️": 0, "👍": 0, "👎": 0}');
     const userVotes = JSON.parse(localStorage.getItem(userVoteKey) || '{"❤️": false, "👍": false, "👎": false}');
 
-    // Update numbers
-    document.getElementById("count-heart").innerText = counts["❤️"] || 0;
-    document.getElementById("count-like").innerText = counts["👍"] || 0;
-    document.getElementById("count-dislike").innerText = counts["👎"] || 0;
+    const countHeart = document.getElementById("count-heart");
+    const countLike = document.getElementById("count-like");
+    const countDislike = document.getElementById("count-dislike");
 
-    // Toggle visually active class on buttons
+    if (countHeart) countHeart.innerText = counts["❤️"] || 0;
+    if (countLike) countLike.innerText = counts["👍"] || 0;
+    if (countDislike) countDislike.innerText = counts["👎"] || 0;
+
     const btnHeart = document.getElementById("btn-react-heart");
     const btnLike = document.getElementById("btn-react-like");
     const btnDislike = document.getElementById("btn-react-dislike");
@@ -145,6 +164,8 @@ function sendReply() {
     if (!currentLetterId) return;
 
     const input = document.getElementById("replyInput");
+    if (!input) return;
+
     const text = input.value.trim();
 
     if (!text) {
@@ -167,6 +188,8 @@ function loadSavedComments() {
     if (!currentLetterId) return;
 
     const container = document.getElementById("commentsListContainer");
+    if (!container) return;
+
     const key = `comments_${currentLetterId}`;
     const comments = JSON.parse(localStorage.getItem(key) || '[]');
 
@@ -199,6 +222,7 @@ function deleteComment(index) {
 }
 
 function escapeHtml(str) {
+    if (!str) return '';
     return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
